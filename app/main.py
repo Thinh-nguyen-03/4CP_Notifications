@@ -39,8 +39,9 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 async def root_dashboard(request: Request) -> HTMLResponse:
     """Ensure the site root serves the dashboard (some deploys only matched deeper routes)."""
     return _root_templates.TemplateResponse(
+        request,
         "dashboard.html",
-        {"request": request, "view_token": ""},
+        {"view_token": ""},
     )
 
 
