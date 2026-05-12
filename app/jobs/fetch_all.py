@@ -1,3 +1,12 @@
+"""
+Daily fetch job — runs at 3:05 AM and 11:05 AM CT.
+
+Workflow per run:
+  1. Pull predictions from Amperon
+  2. Pull/update monthly peaks from NRGStream
+  3. Generate a single time-limited view token
+  4. Email the dashboard link (BCC) to all configured recipients
+"""
 import asyncio
 import logging
 import sys
@@ -6,19 +15,28 @@ from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import async_session_maker, engine
 from app.db_init import create_tables
-from app.fetchers.amperon import fetch_amperon
+from app.fetchers.amperon import PredictionBatch, fetch_amperon
 from app.fetchers.nrgstream import fetch_demand_readings
 from app.models import FetchRun
+from app.routes.predictions import _format_interval_str
+from app.services.email import send_dashboard_email
 from app.services.peaks import compute_monthly_peaks, upsert_monthly_peaks
 from app.services.predictions import upsert_predictions
+from app.services.view_token import create_view_token, mark_email_sent
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+)
 log = logging.getLogger("fetch_all")
 
 
-async def _record_run_start(session: AsyncSession, source: str, slot: str | None = None) -> FetchRun:
+async def _record_run_start(
+    session: AsyncSession, source: str, slot: str | None = None
+) -> FetchRun:
     run = FetchRun(source=source, slot=slot, status="running")
     session.add(run)
     await session.commit()
@@ -40,7 +58,8 @@ async def _record_run_end(
     await session.commit()
 
 
-async def run_amperon() -> bool:
+async def run_amperon() -> tuple[bool, PredictionBatch | None]:
+    """Fetch and store Amperon predictions.  Returns (success, batch)."""
     async with async_session_maker() as session:
         run = await _record_run_start(session, source="amperon")
         try:
@@ -48,15 +67,21 @@ async def run_amperon() -> bool:
             run.slot = batch.slot
             written = await upsert_predictions(session, batch)
             await _record_run_end(session, run, "success", rows_written=written)
-            log.info("amperon: stored %d predictions for slot=%s cp_day=%s", written, batch.slot, batch.cp_day_called)
-            return True
+            log.info(
+                "amperon: stored %d predictions slot=%s cp_day=%s",
+                written,
+                batch.slot,
+                batch.cp_day_called,
+            )
+            return True, batch
         except Exception as e:
             log.exception("amperon fetch failed")
             await _record_run_end(session, run, "failed", error=f"{e}\n{traceback.format_exc()}")
-            return False
+            return False, None
 
 
 async def run_nrgstream() -> bool:
+    """Fetch and store NRGStream monthly peaks."""
     async with async_session_maker() as session:
         run = await _record_run_start(session, source="nrgstream")
         try:
@@ -65,18 +90,50 @@ async def run_nrgstream() -> bool:
             peaks = compute_monthly_peaks(readings)
             written = await upsert_monthly_peaks(session, peaks)
             await _record_run_end(session, run, "success", rows_written=written)
-            log.info("nrgstream: updated %d monthly peaks for year=%s", written, season_year)
+            log.info("nrgstream: updated %d monthly peaks year=%s", written, season_year)
             return True
         except Exception as e:
             log.exception("nrgstream fetch failed")
-            await _record_run_end(session, run, "failed", error=f"{e}\n{traceback.format_exc()}")
+            await _record_run_end(
+                session, run, "failed", error=f"{e}\n{traceback.format_exc()}"
+            )
             return False
+
+
+async def run_notify(batch: PredictionBatch) -> None:
+    """
+    Create a view token for the just-fetched report and email the dashboard link.
+    A fresh token is generated on every successful Amperon run so the link in the
+    latest email always works independently of the previous one.
+    """
+    async with async_session_maker() as session:
+        raw_token = await create_view_token(session, batch.slot, batch.cp_day_called)
+
+        view_url = f"{settings.base_url.rstrip('/')}/r/{raw_token}"
+        interval = _format_interval_str(batch.cp_day_called)
+
+        try:
+            await send_dashboard_email(view_url, interval, slot=batch.slot)
+            # Reload the token row (created in the session above, then committed)
+            from app.services.view_token import validate_view_token
+            token_row = await validate_view_token(session, raw_token)
+            if token_row:
+                await mark_email_sent(session, token_row)
+        except Exception:
+            log.exception("Email delivery failed (token was still created: %s)", view_url)
 
 
 async def main() -> int:
     await create_tables()
-    amperon_ok = await run_amperon()
+
+    amperon_ok, batch = await run_amperon()
     nrgstream_ok = await run_nrgstream()
+
+    if amperon_ok and batch:
+        await run_notify(batch)
+    else:
+        log.warning("Skipping email notification because Amperon fetch failed")
+
     await engine.dispose()
     return 0 if (amperon_ok and nrgstream_ok) else 1
 
