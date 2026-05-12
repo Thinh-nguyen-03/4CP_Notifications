@@ -1,15 +1,22 @@
 import ssl
 from urllib.parse import urlparse
 
-import certifi
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.config import settings
 
 
-def _asyncpg_ssl_context() -> ssl.SSLContext:
-    """Mozilla CA bundle; avoids verify failures on slim runtimes (Render + Supabase TLS)."""
-    return ssl.create_default_context(cafile=certifi.where())
+def _ssl_context_encrypted_no_verify() -> ssl.SSLContext:
+    """Encrypted but no cert verification — required for Supabase Supavisor pooler.
+
+    Supabase's connection pooler (Supavisor) presents a self-signed certificate that
+    no public CA bundle can verify.  Disabling verification is the standard workaround
+    documented by Supabase; the connection is still fully encrypted.
+    """
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
 
 
 def _normalize_async_url(url: str) -> str:
@@ -27,18 +34,18 @@ def _connect_args_for_url(url: str) -> dict:
     q = parsed.query.lower()
     args: dict = {}
 
-    use_ssl = (
-        "render.com" in lowered
-        or "render.internal" in lowered
-        or "supabase.co" in lowered
-        or "pooler.supabase.com" in lowered
-    )
-    if use_ssl and "sslmode=disable" not in q:
-        # Explicit CA bundle (certifi): `ssl=True` uses the image default store and can fail
-        # verify on slim runtimes (e.g. Render + Supabase) even when `sslmode=require` is in the URL.
-        args["ssl"] = _asyncpg_ssl_context()
+    is_supabase = "supabase.co" in lowered or "pooler.supabase.com" in lowered
+    is_render_db = "render.com" in lowered or "render.internal" in lowered
 
-    # Supabase "Transaction" pooler (port 6543 / PgBouncer): asyncpg must disable statement cache.
+    if (is_supabase or is_render_db) and "sslmode=disable" not in q:
+        if is_supabase:
+            # Supabase Supavisor uses a self-signed cert — encrypt without verify.
+            args["ssl"] = _ssl_context_encrypted_no_verify()
+        else:
+            # Render managed Postgres has a CA-signed cert; full verification is fine.
+            args["ssl"] = True
+
+    # Supabase transaction pooler (port 6543 / PgBouncer): asyncpg must not cache prepared statements.
     if parsed.port == 6543:
         args["statement_cache_size"] = 0
 
