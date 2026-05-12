@@ -1,20 +1,49 @@
 envVarGroups:
-  - name: 4cp-shared
+  - name: fourcp-shared
     envVars:
       - key: ADMIN_API_KEY
         generateValue: true
+
       - key: AMPERON_CLIENT_ID
         sync: false
       - key: AMPERON_CLIENT_SECRET
         sync: false
+
       - key: NRGSTREAM_USERNAME
         sync: false
       - key: NRGSTREAM_PASSWORD
         sync: false
 
+      - key: AZURE_TENANT_ID
+        sync: false
+      - key: AZURE_CLIENT_ID
+        sync: false
+      - key: AZURE_CLIENT_SECRET
+        sync: false
+
+      - key: EMAIL_SENDER
+        sync: false
+      - key: EMAIL_PRIMARY_TO
+        sync: false
+      - key: EMAIL_BCC
+        sync: false
+      - key: EMAIL_REPLY_TO
+        sync: false
+
+      - key: BASE_URL
+        sync: false
+
+      - key: TOKEN_TTL_HOURS
+        value: "36"
+
+      - key: USE_MOCK_FETCHERS
+        value: "false"
+      - key: MOCK_FETCH_SLOT
+        value: "11AM"
+
 services:
   - type: web
-    name: 4cp-api
+    name: fourcp-api
     runtime: python
     plan: free
     rootDir: cloud_api
@@ -22,43 +51,45 @@ services:
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
-      - fromGroup: 4cp-shared
+      - fromGroup: fourcp-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: 4cp-db
+          name: fourcp-db
           property: connectionString
 
+  # 08:05 UTC = 03:05 US Central during CDT (UTC-5). In CST (UTC-6) this runs at 02:05 Central; adjust if you need wall-clock CT year-round.
   - type: cron
-    name: 4cp-fetch-3am
+    name: fourcp-fetch-3am
     runtime: python
     plan: free
     rootDir: cloud_api
-    schedule: "30 8 * * *"
+    schedule: "5 8 * * *"
     buildCommand: pip install -r requirements.txt
     startCommand: python -m app.jobs.fetch_all
     envVars:
-      - fromGroup: 4cp-shared
+      - fromGroup: fourcp-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: 4cp-db
+          name: fourcp-db
           property: connectionString
 
+  # 16:05 UTC = 11:05 US Central during CDT (UTC-5).
   - type: cron
-    name: 4cp-fetch-11am
+    name: fourcp-fetch-11am
     runtime: python
     plan: free
     rootDir: cloud_api
-    schedule: "30 16 * * *"
+    schedule: "5 16 * * *"
     buildCommand: pip install -r requirements.txt
     startCommand: python -m app.jobs.fetch_all
     envVars:
-      - fromGroup: 4cp-shared
+      - fromGroup: fourcp-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: 4cp-db
+          name: fourcp-db
           property: connectionString
 
 databases:
-  - name: 4cp-db
+  - name: fourcp-db
     plan: free
-    databaseName: 4cp
+    databaseName: fourcp
