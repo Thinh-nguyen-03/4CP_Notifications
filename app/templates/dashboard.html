@@ -6,7 +6,7 @@
   <title>ERCOT 4CP Forecast — SENERGY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -24,10 +24,16 @@
       --danger: #b91c1c;
       --neutral: #94a3b8;
 
+      --ribbon-tint: #e4eaf4;
+      --ribbon-tint: color-mix(in srgb, var(--navy) 11%, white);
+      --ribbon-edge: #c8d4e8;
+      --ribbon-edge: color-mix(in srgb, var(--navy) 20%, white);
+
       --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      --font-ui: 'DM Sans', var(--font);
       --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
-      --row-label-width: 170px;
-      --peaks-label-width: 150px;
+      --row-label-width: 180px;
+      --peaks-label-width: 160px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,10 +65,15 @@
       line-height: 1.15;
     }
     .masthead-title .date {
-      margin-top: 4px;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.7);
-      font-weight: 400;
+      margin-top: 8px;
+      font-family: 'DM Sans', var(--font);
+      font-size: 19px;
+      font-weight: 600;
+      font-style: italic;
+      line-height: 1.35;
+      color: rgba(255, 255, 255, 0.94);
+      letter-spacing: 0.02em;
+      font-variant-numeric: lining-nums;
     }
     .masthead-meta {
       display: flex;
@@ -101,8 +112,11 @@
     .container { max-width: 1100px; margin: 0 auto; padding: 40px 32px 72px; }
 
     .card {
+      font-family: var(--font-ui);
       background: var(--card);
       border: 1px solid var(--border);
+      border-top: 14px solid var(--ribbon-tint);
+      border-bottom: 14px solid var(--ribbon-tint);
       border-radius: 8px;
       box-shadow: var(--shadow);
       margin-bottom: 24px;
@@ -126,41 +140,85 @@
       border-bottom: 2px solid var(--gold);
       display: inline-block;
     }
-    .card-body { padding: 24px 28px; }
+    .card-body { padding: 16px 28px; }
 
-    .explain-group { padding: 20px 0; }
-    .explain-group:first-child { padding-top: 4px; }
-    .explain-group:last-child { padding-bottom: 4px; }
-    .explain-group + .explain-group { border-top: 1px solid var(--border); }
+    .card:has(.explain) .card-body {
+      padding: 24px 32px 28px;
+    }
+    .explain {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 28px 56px;
+      align-items: start;
+    }
+    .explain-group {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      margin: 0;
+    }
+    .explain-group + .explain-group {
+      border-left: none;
+      padding-left: 0;
+    }
+    .explain-group.note-group {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px 28px;
+      align-items: start;
+      padding: 18px 24px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+    .explain-group.note-group > .explain-h {
+      margin: 0;
+      padding: 4px 0 0;
+      border-bottom: none;
+      align-self: start;
+    }
     .explain-h {
       font-size: 11px;
       font-weight: 700;
       color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 14px;
+      letter-spacing: 0.85px;
+      margin: 0 0 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .explain-items {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
     .explain-row {
       display: grid;
-      grid-template-columns: 130px 1fr;
-      align-items: baseline;
-      gap: 16px;
-      padding: 7px 0;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      gap: 10px 18px;
       font-size: 14px;
       color: var(--text-2);
-      line-height: 1.5;
+      line-height: 1.55;
     }
     .explain-row .label {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       font-weight: 600;
       color: var(--text);
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      min-width: 7.5rem;
     }
     .explain-row .dot {
-      width: 10px;
-      height: 10px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       flex-shrink: 0;
     }
@@ -168,48 +226,46 @@
     .explain-row .dot.neutral { background: var(--neutral); }
     .explain-row .desc strong { color: var(--text); font-weight: 600; }
     .note-row {
-      font-size: 13.5px;
-      color: var(--text-2);
-      line-height: 1.55;
+      font-size: 14px;
+      color: var(--text-3);
+      line-height: 1.6;
+      font-style: italic;
+      max-width: 72ch;
     }
-    .note-row strong { color: var(--text); font-weight: 600; }
-    .note-row .lead {
-      color: var(--navy);
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      margin-right: 6px;
-    }
+    .note-row strong { color: var(--text-2); font-weight: 600; font-style: normal; }
 
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .data-table thead th {
-      padding: 12px 10px;
-      font-size: 11px;
+      padding: 13px 10px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--text-3);
       text-transform: uppercase;
-      letter-spacing: 0.7px;
+      letter-spacing: 0.55px;
       text-align: center;
-      background: #fafbfc;
+      background: var(--card);
       border-bottom: 1px solid var(--border);
     }
     .data-table tbody td {
-      padding: 14px 10px;
-      font-size: 14.5px;
+      padding: 15px 10px;
+      font-size: 16px;
       font-weight: 500;
       color: var(--text);
       text-align: center;
       border-bottom: 1px solid var(--border);
       font-variant-numeric: tabular-nums;
     }
-    .data-table tbody tr:last-child td { border-bottom: none; }
+    .card:has(.data-table) {
+      padding-bottom: 12px;
+    }
     .data-table th:first-child,
     .data-table td:first-child {
       text-align: left;
       padding-left: 28px;
     }
-    .data-table thead th:first-child { background: #fafbfc; }
+    .data-table thead th:first-child { background: var(--card); }
     .data-table tbody td:first-child {
-      font-size: 13.5px;
+      font-size: 15.5px;
       font-weight: 700;
       color: var(--navy);
       letter-spacing: 0.1px;
@@ -217,13 +273,26 @@
     .data-table .empty { color: var(--text-4); font-weight: 400; }
 
     .peaks-table col.label-col { width: var(--peaks-label-width); }
+    .peaks-table thead th:not(:first-child) {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: 0.15px;
+      text-transform: none;
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
     .forecast-table col.label-col { width: var(--row-label-width); }
+    .forecast-table thead th:not(:first-child):not(:last-child),
+    .forecast-table tbody td:not(:first-child):not(:last-child) {
+      text-align: right;
+    }
     .forecast-table thead th .day-num {
       display: block;
-      font-size: 13px;
+      font-size: 15.5px;
       font-weight: 600;
       color: var(--text);
-      margin-top: 3px;
+      margin-top: 4px;
       letter-spacing: 0;
       text-transform: none;
     }
@@ -360,18 +429,39 @@
       .masthead { padding: 16px 18px; gap: 16px; flex-wrap: wrap; }
       .masthead-divider { display: none; }
       .masthead-title h1 { font-size: 20px; }
+      .masthead-title .date { font-size: 16px; margin-top: 6px; }
       .masthead-logo img { height: 40px; }
       .masthead-meta .stamp { display: none; }
       .container { padding: 24px 12px 48px; }
       .card-head, .card-body { padding-left: 16px; padding-right: 16px; }
       .chart-wrapper { padding: 18px 16px 0; }
       .data-table th:first-child, .data-table td:first-child { padding-left: 16px; }
-      .data-table thead th { padding: 10px 4px; font-size: 10px; }
-      .data-table tbody td { padding: 11px 4px; font-size: 12.5px; }
-      .data-table tbody td:first-child { font-size: 12.5px; }
+      .data-table thead th { padding: 10px 4px; font-size: 11.5px; }
+      .peaks-table thead th:not(:first-child) {
+        font-size: 14px;
+        font-weight: 700;
+        padding-top: 12px;
+        padding-bottom: 12px;
+      }
+      .data-table tbody td { padding: 11px 4px; font-size: 14px; }
+      .data-table tbody td:first-child { font-size: 14px; }
       .peaks-table col.label-col,
-      .forecast-table col.label-col { width: 100px; }
-      .explain-row { grid-template-columns: 110px 1fr; gap: 12px; }
+      .forecast-table col.label-col { width: 110px; }
+      .card:has(.explain) .card-body { padding: 20px 16px 24px; }
+      .explain {
+        grid-template-columns: 1fr;
+        gap: 22px;
+      }
+      .explain-group.note-group {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 16px 14px 18px;
+      }
+      .explain-row {
+        grid-template-columns: minmax(5.5rem, auto) 1fr;
+        gap: 8px 12px;
+        font-size: 13px;
+      }
     }
   </style>
 </head>
@@ -413,36 +503,44 @@
 <main class="container">
 
   <div class="card">
-    <div class="card-head"><div class="card-title">Understanding 4CP Scores</div></div>
     <div class="card-body">
-      <div class="explain-group">
-        <div class="explain-h">Score Bands</div>
-        <div class="explain-row">
-          <span class="label"><span class="dot danger"></span>90+</span>
-          <span class="desc"><strong>Peak event may occur</strong> that day.</span>
+      <div class="explain">
+
+        <div class="explain-group">
+          <div class="explain-h">Score Bands</div>
+          <div class="explain-items">
+            <div class="explain-row">
+              <span class="label"><span class="dot danger"></span>90+</span>
+              <span class="desc"><strong>Peak event may occur</strong> that day.</span>
+            </div>
+            <div class="explain-row">
+              <span class="label"><span class="dot neutral"></span>&lt;&nbsp;90</span>
+              <span class="desc"><strong>Peak event is unlikely</strong> that day.</span>
+            </div>
+          </div>
         </div>
-        <div class="explain-row">
-          <span class="label"><span class="dot neutral"></span>&lt; 90</span>
-          <span class="desc"><strong>Peak event is unlikely</strong> that day.</span>
+
+        <div class="explain-group">
+          <div class="explain-h">Daily Updates</div>
+          <div class="explain-items">
+            <div class="explain-row">
+              <span class="label">3:00 AM CT</span>
+              <span class="desc">Early morning forecast.</span>
+            </div>
+            <div class="explain-row">
+              <span class="label">11:00 AM CT</span>
+              <span class="desc">Critical update before afternoon peak hours.</span>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="explain-group">
-        <div class="explain-h">Daily Updates</div>
-        <div class="explain-row">
-          <span class="label">3:00 AM CT</span>
-          <span class="desc">Early morning forecast for that day's peak probability.</span>
+
+        <div class="explain-group note-group">
+          <div class="explain-h">Note</div>
+          <div class="note-row">
+            Scores don't map directly to event probability. A score of 50 does <strong>not</strong> mean a 50% chance.
+          </div>
         </div>
-        <div class="explain-row">
-          <span class="label">11:00 AM CT</span>
-          <span class="desc">Critical update before afternoon peak hours when events typically occur.</span>
-        </div>
-      </div>
-      <div class="explain-group">
-        <div class="note-row">
-          <span class="lead">Note —</span>
-          Peak scores don't translate directly to event probability.
-          A score of 50 does <strong>not</strong> mean a 50% chance.
-        </div>
+
       </div>
     </div>
   </div>
@@ -498,12 +596,33 @@ const Y_TICKS = [50, 60, 70, 80, 90, 100];
 const Y_MIN = 50;
 const Y_MAX = 100;
 
+// Injected by the server when the page is served via a /r/{token} email link.
+// Empty string means the visitor is using the manual API-key login flow.
+const VIEW_TOKEN = "{{ view_token | default('') }}";
+
 let apiKey = localStorage.getItem(KEY_STORAGE) || '';
 let chartInstance = null;
 
 async function apiFetch(path) {
-  const res = await fetch(path, { headers: { 'Authorization': `Bearer ${apiKey}` } });
-  if (res.status === 401 || res.status === 403) {
+  let url = path;
+  let headers = {};
+
+  if (VIEW_TOKEN) {
+    // Token-mode: rewrite API calls to the public /api/report/{token} endpoints
+    if (path === '/api/latest') {
+      url = `/api/report/${VIEW_TOKEN}`;
+    } else if (path.startsWith('/api/predictions')) {
+      const slot = new URLSearchParams(path.split('?')[1] || '').get('slot');
+      url = `/api/report/${VIEW_TOKEN}/predictions${slot ? `?slot=${slot}` : ''}`;
+    }
+    // No Authorization header — the token in the URL path is the credential
+  } else {
+    headers = { 'Authorization': `Bearer ${apiKey}` };
+  }
+
+  const res = await fetch(url, { headers });
+
+  if (!VIEW_TOKEN && (res.status === 401 || res.status === 403)) {
     localStorage.removeItem(KEY_STORAGE);
     apiKey = '';
     showAuthGate(res.status === 403 ? 'Invalid or revoked API key.' : 'Session expired. Please sign in again.');
@@ -579,13 +698,13 @@ const yAxisOverlay = {
       ctx.lineTo(chartArea.right, yPx);
       ctx.stroke();
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '500 11px Geist, sans-serif';
+      ctx.font = '500 11px "DM Sans", sans-serif';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       ctx.fillText(value, chartArea.left - 12, yPx);
     });
     ctx.fillStyle = '#64748b';
-    ctx.font = '600 10px Geist, sans-serif';
+    ctx.font = '600 10px "DM Sans", sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     ctx.fillText('GW', chartArea.left - 12, chartArea.top - 2);
@@ -600,7 +719,7 @@ const scoreLabels = {
     const meta = chart.getDatasetMeta(0);
     const scores = chart.$scoresForLabels || [];
     ctx.save();
-    ctx.font = '700 12px Geist, sans-serif';
+    ctx.font = '700 12px "DM Sans", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     scores.forEach((score, i) => {
@@ -651,8 +770,8 @@ function renderForecast(pred) {
         tooltip: {
           backgroundColor: '#0f1a2f',
           padding: 12,
-          titleFont: { family: 'Geist', size: 12, weight: '700' },
-          bodyFont: { family: 'Geist', size: 12, weight: '500' },
+          titleFont: { family: 'DM Sans', size: 12, weight: '700' },
+          bodyFont: { family: 'DM Sans', size: 12, weight: '500' },
           displayColors: false,
           callbacks: {
             title: (items) => {
@@ -742,8 +861,15 @@ $('signout-btn').addEventListener('click', () => {
   showAuthGate();
 });
 
-if (apiKey) loadDashboard();
-else showAuthGate();
+if (VIEW_TOKEN) {
+  // Email link mode — skip the auth gate entirely and hide the sign-out button
+  $('signout-btn').style.display = 'none';
+  loadDashboard();
+} else if (apiKey) {
+  loadDashboard();
+} else {
+  showAuthGate();
+}
 </script>
 
 </body>
