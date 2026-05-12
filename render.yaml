@@ -1,5 +1,5 @@
 envVarGroups:
-  - name: fourcp-shared
+  - name: 4cp-shared
     envVars:
       - key: ADMIN_API_KEY
         generateValue: true
@@ -43,53 +43,53 @@ envVarGroups:
 
 services:
   - type: web
-    name: fourcp-api
+    name: 4cp-api
     runtime: python
     plan: free
-    rootDir: cloud_api
+    rootDir: .
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
-      - fromGroup: fourcp-shared
+      - fromGroup: 4cp-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: fourcp-db
+          name: 4cp-db
           property: connectionString
 
   # 08:05 UTC = 03:05 US Central during CDT (UTC-5). In CST (UTC-6) this runs at 02:05 Central; adjust if you need wall-clock CT year-round.
   - type: cron
-    name: fourcp-fetch-3am
+    name: 4cp-fetch-3am
     runtime: python
     plan: free
-    rootDir: cloud_api
+    rootDir: .
     schedule: "5 8 * * *"
     buildCommand: pip install -r requirements.txt
     startCommand: python -m app.jobs.fetch_all
     envVars:
-      - fromGroup: fourcp-shared
+      - fromGroup: 4cp-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: fourcp-db
+          name: 4cp-db
           property: connectionString
 
   # 16:05 UTC = 11:05 US Central during CDT (UTC-5).
   - type: cron
-    name: fourcp-fetch-11am
+    name: 4cp-fetch-11am
     runtime: python
     plan: free
-    rootDir: cloud_api
+    rootDir: .
     schedule: "5 16 * * *"
     buildCommand: pip install -r requirements.txt
     startCommand: python -m app.jobs.fetch_all
     envVars:
-      - fromGroup: fourcp-shared
+      - fromGroup: 4cp-shared
       - key: DATABASE_URL
         fromDatabase:
-          name: fourcp-db
+          name: 4cp-db
           property: connectionString
 
 databases:
-  - name: fourcp-db
+  - name: 4cp-db
     plan: free
-    databaseName: fourcp
+    databaseName: 4cp
