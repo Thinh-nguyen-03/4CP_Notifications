@@ -1,11 +1,14 @@
 import csv
 import io
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 
 import httpx
 
 from app.config import settings
+
+_log = logging.getLogger(__name__)
 
 NRG_BASE_URL = "https://api.nrgstream.com"
 TOKEN_PATH = "/api/security/token"
@@ -62,6 +65,12 @@ async def _release_token(client: httpx.AsyncClient, token: str) -> None:
 
 
 async def fetch_demand_readings(season_year: int) -> list[DemandReading]:
+    if settings.use_mock_fetchers:
+        from app.fetchers import mock_data
+
+        _log.warning("USE_MOCK_FETCHERS: returning synthetic NRGStream readings (year=%s)", season_year)
+        return mock_data.mock_demand_readings(season_year)
+
     if not settings.nrgstream_username or not settings.nrgstream_password:
         raise RuntimeError("NRGSTREAM_USERNAME / NRGSTREAM_PASSWORD not configured")
 

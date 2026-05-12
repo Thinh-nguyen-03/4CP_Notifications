@@ -1,12 +1,15 @@
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
-from typing import Literal
+import logging
+from typing import Literal, cast
 
 import httpx
 
 from app.config import settings
 
 AMPERON_URL = "https://platform.amperon.co/export/peak-alerts/predictions/ercot_4cp"
+
+_log = logging.getLogger(__name__)
 
 Slot = Literal["3AM", "11AM"]
 
@@ -37,6 +40,13 @@ def _slot_from_timestamp(ts: datetime) -> Slot | None:
 
 
 async def fetch_amperon() -> PredictionBatch:
+    if settings.use_mock_fetchers:
+        from app.fetchers import mock_data
+
+        slot = settings.mock_fetch_slot if settings.mock_fetch_slot in ("3AM", "11AM") else "11AM"
+        _log.warning("USE_MOCK_FETCHERS: returning synthetic Amperon batch (slot=%s)", slot)
+        return mock_data.mock_prediction_batch(slot=cast(Slot, slot))
+
     if not settings.amperon_client_id or not settings.amperon_client_secret:
         raise RuntimeError("AMPERON_CLIENT_ID / AMPERON_CLIENT_SECRET not configured")
 
