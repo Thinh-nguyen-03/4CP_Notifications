@@ -6,7 +6,7 @@ the email link.  No bearer API key is required.
   GET /api/report/{token}           → returns LatestResponse JSON
   GET /api/report/{token}/predictions?slot=3AM|11AM  → PredictionBatchResponse JSON
 """
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -39,15 +39,15 @@ def _peak_hour_label(ts: datetime) -> str:
     return f"HE{adjusted_interval(ts).hour or 24}"
 
 
-async def _assemble_peaks(session: AsyncSession) -> PeaksResponse | None:
-    """Return most-recent season peaks, or None if no data."""
+async def _assemble_peaks(session: AsyncSession) -> PeaksResponse:
+    """Most recent season with peak rows, or current calendar year with an empty list."""
     row = (
         await session.execute(
             select(MonthlyPeak.season_year).order_by(MonthlyPeak.season_year.desc()).limit(1)
         )
     ).first()
     if row is None:
-        return None
+        return PeaksResponse(season_year=date.today().year, monthly_peaks=[])
     season_year = row[0]
     rows = (
         await session.execute(
@@ -57,7 +57,7 @@ async def _assemble_peaks(session: AsyncSession) -> PeaksResponse | None:
         )
     ).scalars().all()
     if not rows:
-        return None
+        return PeaksResponse(season_year=season_year, monthly_peaks=[])
     return PeaksResponse(
         season_year=season_year,
         monthly_peaks=[
@@ -124,8 +124,9 @@ async def view_dashboard(
         )
     # Inject the raw token so the dashboard JS can call /api/report/{token}
     return templates.TemplateResponse(
+        request,
         "dashboard.html",
-        {"request": request, "view_token": token},
+        {"view_token": token},
     )
 
 
@@ -148,7 +149,7 @@ async def get_report_latest(
     last_updated_candidates: list[datetime] = []
     if predictions:
         last_updated_candidates.append(predictions.fetched_at)
-    if peaks:
+    if peaks.monthly_peaks:
         peak_updated = (
             await session.execute(
                 select(MonthlyPeak.updated_at).order_by(MonthlyPeak.updated_at.desc()).limit(1)
