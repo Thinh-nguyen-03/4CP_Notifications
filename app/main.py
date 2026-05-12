@@ -21,8 +21,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="4CP Cloud API",
-    description="Standalone API serving ERCOT 4CP predictions and peak data.",
+    title="4CP Notifications API",
+    description="API serving ERCOT 4CP predictions and peak data.",
     version="0.1.0",
     lifespan=lifespan,
 )
