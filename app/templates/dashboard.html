@@ -6,7 +6,7 @@
   <title>ERCOT 4CP Forecast — SENERGY</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -20,10 +20,13 @@
       --border-2: #d6d9df;
       --navy: #1a2a4a;
       --navy-deep: #0f1a2f;
+      --navy-soft: #2a3a5a;
       --gold: #f4b942;
+      --gold-soft: #f9d27e;
       --danger: #b91c1c;
       --neutral: #94a3b8;
 
+      /* Ribbons / note panel — light but visibly navy (not neutral gray) */
       --ribbon-tint: #e4eaf4;
       --ribbon-tint: color-mix(in srgb, var(--navy) 11%, white);
       --ribbon-edge: #c8d4e8;
@@ -31,12 +34,16 @@
 
       --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       --font-ui: 'DM Sans', var(--font);
+
       --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
-      --row-label-width: 180px;
+      --shadow-hover: 0 1px 2px rgba(15, 23, 42, 0.973), 0 6px 18px rgba(15, 23, 42, 0.08);
+
+      --row-label-width: 112px;
       --peaks-label-width: 160px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     html, body {
       font-family: var(--font);
       background: var(--page-bg);
@@ -45,28 +52,49 @@
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
+    body {
+      background: linear-gradient(180deg, var(--navy-deep) 0px, var(--navy-deep) 140px, #1e3050 220px, #dde2ea 420px, var(--page-bg) 520px);
+      background-attachment: fixed;
+    }
 
+    /* Masthead — sits flush on the dark page background, no hard shelf edge */
     .masthead {
-      background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
-      border-bottom: 3px solid var(--gold);
-      padding: 22px 40px;
+      background: transparent;
+      border-bottom: none;
+      padding: 28px 40px 24px;
       display: flex;
       align-items: center;
       gap: 36px;
     }
-    .masthead-logo img { height: 56px; display: block; }
-    .masthead-divider { width: 1px; height: 56px; background: rgba(255,255,255,0.14); flex: 0 0 auto; }
-    .masthead-title { flex: 1; min-width: 0; }
+    .masthead-logo {
+      flex: 0 0 auto;
+    }
+    .masthead-logo img {
+      height: 56px;
+      display: block;
+    }
+    .masthead-divider {
+      width: 1px;
+      height: 56px;
+      background: rgba(255, 255, 255, 0.14);
+      flex: 0 0 auto;
+    }
+    .masthead-title {
+      flex: 1;
+      min-width: 0;
+    }
     .masthead-title h1 {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--gold);
-      letter-spacing: -0.4px;
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 28px;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--gold-soft);
+      letter-spacing: 0.2px;
       line-height: 1.15;
     }
     .masthead-title .date {
       margin-top: 8px;
-      font-family: 'DM Sans', var(--font);
+      font-family: 'DM Sans', sans-serif;
       font-size: 19px;
       font-weight: 600;
       font-style: italic;
@@ -77,18 +105,22 @@
     }
     .masthead-meta {
       display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
+      align-items: center;
       flex: 0 0 auto;
     }
-    .masthead-meta .stamp {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.62);
+    .masthead-actions { display: flex; align-items: center; gap: 10px; }
+    .masthead-actions .stamp {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.70);
       font-variant-numeric: tabular-nums;
+      letter-spacing: 0.3px;
+      padding-right: 12px;
+      border-right: 1px solid rgba(255,255,255,0.14);
+      margin-right: 4px;
     }
-    .masthead-meta .stamp strong { color: white; font-weight: 600; }
-    .masthead-actions { display: flex; gap: 8px; }
+    .masthead-actions .stamp strong { color: rgba(255,255,255,0.92); font-weight: 600; }
     .icon-btn {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.16);
@@ -109,8 +141,10 @@
     }
     .icon-btn svg { width: 15px; height: 15px; }
 
-    .container { max-width: 1100px; margin: 0 auto; padding: 40px 32px 72px; }
+    /* Page container */
+    .container { max-width: 1600px; margin: 0 auto; padding: 28px 32px 72px; }
 
+    /* Cards */
     .card {
       font-family: var(--font-ui);
       background: var(--card);
@@ -234,6 +268,7 @@
     }
     .note-row strong { color: var(--text-2); font-weight: 600; font-style: normal; }
 
+    /* Tables */
     table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .data-table thead th {
       padding: 13px 10px;
@@ -255,9 +290,11 @@
       border-bottom: 1px solid var(--border);
       font-variant-numeric: tabular-nums;
     }
+    /* Light inset below tables — same white as rows */
     .card:has(.data-table) {
       padding-bottom: 12px;
     }
+    /* Row headers (first column) — bigger and bolder */
     .data-table th:first-child,
     .data-table td:first-child {
       text-align: left;
@@ -269,9 +306,14 @@
       font-weight: 700;
       color: var(--navy);
       letter-spacing: 0.1px;
+      white-space: nowrap;
     }
     .data-table .empty { color: var(--text-4); font-weight: 400; }
+    .data-table tbody tr:hover td { background: #f8fafc; transition: background 0.1s; }
+    .score-cell-danger { background: var(--card); }
+    .col-head-danger { color: var(--danger) !important; }
 
+    /* Peaks table */
     .peaks-table col.label-col { width: var(--peaks-label-width); }
     .peaks-table thead th:not(:first-child) {
       font-size: 17px;
@@ -282,7 +324,10 @@
       padding-top: 14px;
       padding-bottom: 14px;
     }
+
+    /* Forecast table */
     .forecast-table col.label-col { width: var(--row-label-width); }
+    /* Date columns + data: right-align to match y-axis tick justification */
     .forecast-table thead th:not(:first-child):not(:last-child),
     .forecast-table tbody td:not(:first-child):not(:last-child) {
       text-align: right;
@@ -296,17 +341,22 @@
       letter-spacing: 0;
       text-transform: none;
     }
+
     .score-danger  { color: var(--danger); font-weight: 700; }
     .score-neutral { color: var(--text);   font-weight: 600; }
 
-    .forecast-block { padding: 0; }
+    /* Forecast block — chart + table sharing the same horizontal frame */
+    .forecast-block {
+      padding: 0;
+    }
     .chart-wrapper {
-      height: 240px;
+      height: 300px;
       position: relative;
-      padding: 28px 28px 0;
+      padding: 16px 0 0;
       background: white;
     }
 
+    /* Slot toggle */
     .slot-toggle {
       display: inline-flex;
       border: 1px solid var(--border-2);
@@ -329,20 +379,6 @@
     .slot-toggle button + button { border-left: 1px solid var(--border); }
     .slot-toggle button:hover { background: var(--page-bg); color: var(--text); }
     .slot-toggle button.active { background: var(--navy); color: white; }
-
-    .skeleton {
-      background: linear-gradient(90deg, #eef0f3 0%, #e2e5ea 50%, #eef0f3 100%);
-      background-size: 200% 100%;
-      animation: pulse 1.4s ease-in-out infinite;
-      border-radius: 3px;
-      display: inline-block;
-      width: 44px;
-      height: 14px;
-    }
-    @keyframes pulse {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
 
     /* Auth overlay */
     .auth-overlay {
@@ -431,7 +467,7 @@
       .masthead-title h1 { font-size: 20px; }
       .masthead-title .date { font-size: 16px; margin-top: 6px; }
       .masthead-logo img { height: 40px; }
-      .masthead-meta .stamp { display: none; }
+      .masthead-actions .stamp { display: none; }
       .container { padding: 24px 12px 48px; }
       .card-head, .card-body { padding-left: 16px; padding-right: 16px; }
       .chart-wrapper { padding: 18px 16px 0; }
@@ -485,15 +521,15 @@
   <div class="masthead-divider"></div>
   <div class="masthead-title">
     <h1>ERCOT 4CP 7-Day Forecast</h1>
-    <div class="date" id="hero-meta"><span class="skeleton" style="width:240px;background:rgba(255,255,255,0.1)"></span></div>
+    <div class="date" id="hero-meta">&nbsp;</div>
   </div>
   <div class="masthead-meta">
-    <div class="stamp" id="timestamp">&nbsp;</div>
     <div class="masthead-actions">
-      <button class="icon-btn" id="refresh-btn" title="Refresh" aria-label="Refresh">
+      <span class="stamp" id="timestamp">&nbsp;</span>
+      <button type="button" class="icon-btn" id="refresh-btn" title="Refresh" aria-label="Refresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
       </button>
-      <button class="icon-btn" id="signout-btn" title="Sign out" aria-label="Sign out">
+      <button type="button" class="icon-btn" id="signout-btn" title="Sign out" aria-label="Sign out">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
     </div>
@@ -553,13 +589,15 @@
         <col><col><col><col>
       </colgroup>
       <thead>
-        <tr><th></th><th>June</th><th>July</th><th>August</th><th>September</th></tr>
+        <tr>
+          <th></th>
+          <th>June</th>
+          <th>July</th>
+          <th>August</th>
+          <th>September</th>
+        </tr>
       </thead>
-      <tbody id="peaks-body">
-        <tr><td>Date</td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr>
-        <tr><td>Hour</td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr>
-        <tr><td>Peak (GW)</td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td><td><span class="skeleton"></span></td></tr>
-      </tbody>
+      <tbody id="peaks-body"></tbody>
     </table>
   </div>
 
@@ -577,8 +615,9 @@
         <colgroup>
           <col class="label-col">
           <col><col><col><col><col><col><col>
+          <col class="right-pad-col">
         </colgroup>
-        <thead><tr id="forecast-header"><th></th></tr></thead>
+        <thead><tr id="forecast-header"></tr></thead>
         <tbody id="forecast-body"></tbody>
       </table>
     </div>
@@ -590,11 +629,6 @@
 const $ = (id) => document.getElementById(id);
 const KEY_STORAGE = 'fourcp_api_key';
 const DANGER = '#b91c1c';
-const NEUTRAL = '#94a3b8';
-const Y_LABEL_AREA = 170;
-const Y_TICKS = [50, 60, 70, 80, 90, 100];
-const Y_MIN = 50;
-const Y_MAX = 100;
 
 // Injected by the server when the page is served via a /r/{token} email link.
 // Empty string means the visitor is using the manual API-key login flow.
@@ -608,14 +642,12 @@ async function apiFetch(path) {
   let headers = {};
 
   if (VIEW_TOKEN) {
-    // Token-mode: rewrite API calls to the public /api/report/{token} endpoints
     if (path === '/api/latest') {
       url = `/api/report/${VIEW_TOKEN}`;
     } else if (path.startsWith('/api/predictions')) {
       const slot = new URLSearchParams(path.split('?')[1] || '').get('slot');
       url = `/api/report/${VIEW_TOKEN}/predictions${slot ? `?slot=${slot}` : ''}`;
     }
-    // No Authorization header — the token in the URL path is the credential
   } else {
     headers = { 'Authorization': `Bearer ${apiKey}` };
   }
@@ -647,7 +679,6 @@ function hideAuthGate() {
   $('auth-key').value = '';
 }
 
-const scoreColor = (s) => s >= 90 ? DANGER : NEUTRAL;
 const scoreClass = (s) => s >= 90 ? 'score-danger' : 'score-neutral';
 
 function fmtShortDate(iso) {
@@ -667,67 +698,55 @@ function fmtTimestamp(iso) {
 }
 
 function renderPeaks(peaks) {
-  if (!peaks || !peaks.monthly_peaks) return;
-  const byMonth = Object.fromEntries(peaks.monthly_peaks.map(p => [p.month, p]));
+  const monthly = peaks && Array.isArray(peaks.monthly_peaks) ? peaks.monthly_peaks : [];
+  const byMonth = Object.fromEntries(monthly.map((p) => [p.month, p]));
   const months = [6, 7, 8, 9];
   const empty = '<td class="empty">—</td>';
   const monthDateLabel = (p) => {
     const d = new Date(p.peak_timestamp);
     return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
   };
-  const row = (label, format) => '<tr><td>' + label + '</td>' +
-    months.map(m => byMonth[m] ? `<td>${format(byMonth[m])}</td>` : empty).join('') + '</tr>';
+  const row = (label, format) =>
+    '<tr><td>' +
+    label +
+    '</td>' +
+    months.map((m) => (byMonth[m] ? `<td>${format(byMonth[m])}</td>` : empty)).join('') +
+    '</tr>';
   $('peaks-body').innerHTML =
-    row('Date',       monthDateLabel) +
-    row('Hour',       p => p.peak_hour) +
-    row('Peak (GW)',  p => p.peak_gw.toFixed(1));
+    row('Date', monthDateLabel) +
+    row('Hour', (p) => p.peak_hour) +
+    row('Peak (GW)', (p) => p.peak_gw.toFixed(1));
 }
 
-const yAxisOverlay = {
-  id: 'yAxisOverlay',
-  beforeDatasetsDraw(chart) {
-    const { ctx, chartArea, scales: { y } } = chart;
-    if (!chartArea || !y) return;
-    ctx.save();
-    Y_TICKS.forEach(value => {
-      const yPx = y.getPixelForValue(value);
-      ctx.strokeStyle = '#eef0f3';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(chartArea.left, yPx);
-      ctx.lineTo(chartArea.right, yPx);
-      ctx.stroke();
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '500 11px "DM Sans", sans-serif';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(value, chartArea.left - 12, yPx);
+const tableSync = {
+  id: 'tableSync',
+  afterLayout(chart) {
+    const lw = Math.round(chart.chartArea.left);
+    const rw = Math.round(chart.width - chart.chartArea.right);
+    document.querySelectorAll('.forecast-table col.label-col').forEach(col => {
+      col.style.width = lw + 'px';
     });
-    ctx.fillStyle = '#64748b';
-    ctx.font = '600 10px "DM Sans", sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.fillText('GW', chartArea.left - 12, chartArea.top - 2);
-    ctx.restore();
+    document.querySelectorAll('.forecast-table col.right-pad-col').forEach(col => {
+      col.style.width = rw + 'px';
+    });
   }
 };
 
-const scoreLabels = {
-  id: 'scoreLabels',
-  afterDatasetsDraw(chart) {
-    const ctx = chart.ctx;
-    const meta = chart.getDatasetMeta(0);
-    const scores = chart.$scoresForLabels || [];
+const thresholdLine = {
+  id: 'thresholdLine',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea || !scales.y) return;
+    const y = scales.y.getPixelForValue(90);
     ctx.save();
-    ctx.font = '700 12px "DM Sans", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    scores.forEach((score, i) => {
-      const bar = meta.data[i];
-      if (!bar) return;
-      ctx.fillStyle = score >= 90 ? DANGER : '#1f2937';
-      ctx.fillText(score, bar.x, bar.y - 6);
-    });
+    ctx.strokeStyle = 'rgba(185, 28, 28, 0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, y);
+    ctx.lineTo(chartArea.right, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
     ctx.restore();
   }
 };
@@ -737,34 +756,66 @@ function renderForecast(pred) {
   $('hero-meta').textContent = pred.forecast_interval;
 
   $('forecast-header').innerHTML = '<th></th>' + pred.predictions.map(p =>
-    `<th>${fmtWeekday(p.forecast_date)}<span class="day-num">${fmtShortDate(p.forecast_date)}</span></th>`
-  ).join('');
+    `<th class="${p.cp_score >= 90 ? 'col-head-danger' : ''}">${fmtWeekday(p.forecast_date)}<span class="day-num">${fmtShortDate(p.forecast_date)}</span></th>`
+  ).join('') + '<th></th>';
 
-  const peakRow  = '<tr><td>Predicted Peak (GW)</td>' + pred.predictions.map(p => `<td>${p.peak_load_gwh.toFixed(1)}</td>`).join('') + '</tr>';
-  const hourRow  = '<tr><td>Peak Hour</td>'           + pred.predictions.map(p => `<td>${p.peak_hour}</td>`).join('')          + '</tr>';
-  const scoreRow = '<tr><td>4CP Score</td>'           + pred.predictions.map(p =>
-    `<td><span class="${scoreClass(p.cp_score)}">${p.cp_score}</span></td>`
-  ).join('') + '</tr>';
+  const peakRow  = '<tr><td>Peak (GW)</td>'  + pred.predictions.map(p => `<td>${p.peak_load_gwh.toFixed(1)}</td>`).join('') + '<td></td></tr>';
+  const hourRow  = '<tr><td>Peak Hour</td>'  + pred.predictions.map(p => `<td>${p.peak_hour}</td>`).join('')          + '<td></td></tr>';
+  const scoreRow = '<tr><td>4CP Score</td>'  + pred.predictions.map(p =>
+    `<td class="${p.cp_score >= 90 ? 'score-cell-danger' : ''}"><span class="${scoreClass(p.cp_score)}">${p.cp_score}</span></td>`
+  ).join('') + '<td></td></tr>';
   $('forecast-body').innerHTML = peakRow + hourRow + scoreRow;
 
   const ctx = $('chart');
   if (chartInstance) chartInstance.destroy();
+
+  const gwVals = pred.predictions.map(p => p.peak_load_gwh);
+  const gwMin = Math.floor((Math.min(...gwVals) - 0.1) / 5) * 5;
+  const gwMax = Math.ceil((Math.max(...gwVals) + 0.1) / 5) * 5;
+
   chartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: pred.predictions.map(p => fmtShortDate(p.forecast_date)),
-      datasets: [{
-        data: pred.predictions.map(p => p.peak_load_gwh),
-        backgroundColor: pred.predictions.map(p => scoreColor(p.cp_score)),
-        borderRadius: 2,
-        categoryPercentage: 1.0,
-        barPercentage: 0.62,
-      }]
+      datasets: [
+        {
+          type: 'bar',
+          label: '4CP Score',
+          data: pred.predictions.map(p => p.cp_score),
+          backgroundColor: pred.predictions.map(p =>
+            p.cp_score >= 90 ? 'rgba(185,28,28,0.80)' : 'rgba(114,147,176,0.55)'
+          ),
+          borderColor: pred.predictions.map(p =>
+            p.cp_score >= 90 ? '#b91c1c' : '#7293b0'
+          ),
+          borderWidth: 1,
+          borderRadius: 3,
+          categoryPercentage: 0.72,
+          barPercentage: 0.75,
+          yAxisID: 'y',
+          order: 2,
+        },
+        {
+          type: 'line',
+          label: 'Peak GW',
+          data: pred.predictions.map(p => p.peak_load_gwh),
+          borderColor: '#1a2a4a',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#1a2a4a',
+          pointBorderWidth: 2,
+          tension: 0.35,
+          yAxisID: 'yGW',
+          order: 1,
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { left: Y_LABEL_AREA, right: 0, top: 28, bottom: 4 } },
+      layout: { padding: { left: 48, right: 48, top: 12, bottom: 4 } },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -778,25 +829,68 @@ function renderForecast(pred) {
               const p = pred.predictions[items[0].dataIndex];
               return `${fmtWeekday(p.forecast_date)}, ${fmtShortDate(p.forecast_date)}`;
             },
-            label: (ctx) => {
-              const p = pred.predictions[ctx.dataIndex];
-              return [
-                `Predicted Peak: ${p.peak_load_gwh.toFixed(1)} GW`,
-                `Peak Hour: ${p.peak_hour}`,
-                `4CP Score: ${p.cp_score}`,
-              ];
+            label: (item) => {
+              const p = pred.predictions[item.dataIndex];
+              if (item.datasetIndex === 0) return `4CP Score: ${p.cp_score}`;
+              return [`Peak Load: ${p.peak_load_gwh.toFixed(1)} GW`, `Peak Hour: ${p.peak_hour}`];
             }
           }
         }
       },
       scales: {
-        y: { display: false, min: Y_MIN, max: Y_MAX, grid: { display: false } },
-        x: { display: false, grid: { display: false } }
+        yGW: {
+          type: 'linear',
+          position: 'left',
+          min: gwMin,
+          max: gwMax,
+          afterBuildTicks(scale) {
+            const ticks = [];
+            for (let v = scale.min; v <= scale.max; v += 5) ticks.push({ value: v });
+            scale.ticks = ticks;
+          },
+          grid: { color: '#eef0f3' },
+          border: { display: false },
+          ticks: {
+            color: '#334155',
+            font: { size: 12, weight: '600', family: 'DM Sans, sans-serif' },
+            padding: 20,
+            crossAlign: 'near',
+            callback: (v) => Number.isInteger(v) ? v : '',
+          },
+          title: {
+            display: true,
+            text: 'GW',
+            color: '#1e293b',
+            font: { size: 12, weight: '700', family: 'DM Sans, sans-serif' },
+          },
+        },
+        y: {
+          type: 'linear',
+          position: 'right',
+          min: 0,
+          max: 100,
+          afterBuildTicks(scale) {
+            scale.ticks = [0, 25, 50, 75, 100].map(v => ({ value: v }));
+          },
+          grid: { drawOnChartArea: false },
+          border: { display: false },
+          ticks: {
+            color: '#334155',
+            font: { size: 12, weight: '600', family: 'DM Sans, sans-serif' },
+            padding: 14,
+            crossAlign: 'far',
+          },
+          title: { display: false },
+        },
+        x: {
+          display: false,
+          grid: { display: false },
+          offset: true,
+        }
       }
     },
-    plugins: [yAxisOverlay, scoreLabels]
+    plugins: [tableSync, thresholdLine]
   });
-  chartInstance.$scoresForLabels = pred.predictions.map(p => p.cp_score);
   chartInstance.update();
 }
 
@@ -813,7 +907,7 @@ async function loadDashboard() {
       renderForecast(latest.predictions);
       updateSlotToggle(latest.predictions.slot);
     }
-    if (latest.peaks) renderPeaks(latest.peaks);
+    renderPeaks(latest.peaks);
     $('timestamp').innerHTML = `Last updated <strong>${fmtTimestamp(latest.last_updated)}</strong>`;
   } catch (e) {
     if (e.message !== 'auth') {
@@ -862,7 +956,6 @@ $('signout-btn').addEventListener('click', () => {
 });
 
 if (VIEW_TOKEN) {
-  // Email link mode — skip the auth gate entirely and hide the sign-out button
   $('signout-btn').style.display = 'none';
   loadDashboard();
 } else if (apiKey) {
