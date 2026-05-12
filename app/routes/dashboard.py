@@ -13,5 +13,7 @@ router = APIRouter(tags=["dashboard"])
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
-        "dashboard.html", {"request": request, "view_token": ""}
+        request,
+        "dashboard.html",
+        {"view_token": ""},
     )
