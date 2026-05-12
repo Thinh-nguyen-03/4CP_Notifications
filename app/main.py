@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -13,6 +15,9 @@ from app.routes import admin, chart, dashboard, history, latest, peaks, predicti
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
 
+TEMPLATE_DIR = Path(__file__).parent / "templates"
+_root_templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,13 +26,22 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="4CP Notifications API",
-    description="API serving ERCOT 4CP predictions and peak data.",
+    title="4CP Cloud API",
+    description="Standalone API serving ERCOT 4CP predictions and peak data.",
     version="0.1.0",
     lifespan=lifespan,
 )
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def root_dashboard(request: Request) -> HTMLResponse:
+    """Ensure the site root serves the dashboard (some deploys only matched deeper routes)."""
+    return _root_templates.TemplateResponse(
+        "dashboard.html",
+        {"request": request, "view_token": ""},
+    )
 
 
 @app.get("/health")
