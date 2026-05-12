@@ -1,0 +1,64 @@
+envVarGroups:
+  - name: 4cp-shared
+    envVars:
+      - key: ADMIN_API_KEY
+        generateValue: true
+      - key: AMPERON_CLIENT_ID
+        sync: false
+      - key: AMPERON_CLIENT_SECRET
+        sync: false
+      - key: NRGSTREAM_USERNAME
+        sync: false
+      - key: NRGSTREAM_PASSWORD
+        sync: false
+
+services:
+  - type: web
+    name: 4cp-api
+    runtime: python
+    plan: free
+    rootDir: cloud_api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: 4cp-shared
+      - key: DATABASE_URL
+        fromDatabase:
+          name: 4cp-db
+          property: connectionString
+
+  - type: cron
+    name: 4cp-fetch-3am
+    runtime: python
+    plan: free
+    rootDir: cloud_api
+    schedule: "30 8 * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.jobs.fetch_all
+    envVars:
+      - fromGroup: 4cp-shared
+      - key: DATABASE_URL
+        fromDatabase:
+          name: 4cp-db
+          property: connectionString
+
+  - type: cron
+    name: 4cp-fetch-11am
+    runtime: python
+    plan: free
+    rootDir: cloud_api
+    schedule: "30 16 * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.jobs.fetch_all
+    envVars:
+      - fromGroup: 4cp-shared
+      - key: DATABASE_URL
+        fromDatabase:
+          name: 4cp-db
+          property: connectionString
+
+databases:
+  - name: 4cp-db
+    plan: free
+    databaseName: 4cp
