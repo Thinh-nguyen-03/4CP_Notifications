@@ -1,8 +1,15 @@
+import ssl
 from urllib.parse import urlparse
 
+import certifi
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.config import settings
+
+
+def _asyncpg_ssl_context() -> ssl.SSLContext:
+    """Mozilla CA bundle; avoids verify failures on slim runtimes (Render + Supabase TLS)."""
+    return ssl.create_default_context(cafile=certifi.where())
 
 
 def _normalize_async_url(url: str) -> str:
@@ -26,8 +33,10 @@ def _connect_args_for_url(url: str) -> dict:
         or "supabase.co" in lowered
         or "pooler.supabase.com" in lowered
     )
-    if use_ssl and "sslmode" not in q and "ssl=" not in q:
-        args["ssl"] = True
+    if use_ssl and "sslmode=disable" not in q:
+        # Explicit CA bundle (certifi): `ssl=True` uses the image default store and can fail
+        # verify on slim runtimes (e.g. Render + Supabase) even when `sslmode=require` is in the URL.
+        args["ssl"] = _asyncpg_ssl_context()
 
     # Supabase "Transaction" pooler (port 6543 / PgBouncer): asyncpg must disable statement cache.
     if parsed.port == 6543:
