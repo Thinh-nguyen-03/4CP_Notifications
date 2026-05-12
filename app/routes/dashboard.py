@@ -10,7 +10,8 @@ templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 router = APIRouter(tags=["dashboard"])
 
 
-@router.get("/", response_class=HTMLResponse)
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return templates.TemplateResponse(
+        "dashboard.html", {"request": request, "view_token": ""}
+    )
