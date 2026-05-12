@@ -126,6 +126,12 @@ async def run_notify(batch: PredictionBatch) -> None:
 async def main() -> int:
     await create_tables()
 
+    if settings.use_mock_fetchers:
+        log.warning(
+            "USE_MOCK_FETCHERS is enabled — Amperon and NRGStream use synthetic data only "
+            "(unset for production)."
+        )
+
     amperon_ok, batch = await run_amperon()
     nrgstream_ok = await run_nrgstream()
 
