@@ -105,3 +105,11 @@ class ViewToken(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     revoked: Mapped[bool] = mapped_column(Boolean, server_default="false")
     email_sent: Mapped[bool] = mapped_column(Boolean, server_default="false")
+
+
+class EmailList(Base):
+    """BCC recipients for dashboard report emails (one row per address)."""
+
+    __tablename__ = "email_list"
+
+    email: Mapped[str] = mapped_column(String(320), primary_key=True)
