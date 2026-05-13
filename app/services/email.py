@@ -10,8 +10,11 @@ Required Azure AD app permissions (application, not delegated):
 """
 import logging
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from urllib.parse import quote
 
 import httpx
+from fastapi.templating import Jinja2Templates
 
 from app.config import settings
 
@@ -22,6 +25,46 @@ GRAPH_BASE = "https://graph.microsoft.com/v1.0"
 # Module-level token cache for one cron process run.
 _cached_token: str | None = None
 _token_expires_at: datetime = datetime.min.replace(tzinfo=timezone.utc)
+
+_EMAIL_TEMPLATES = Jinja2Templates(
+    directory=str(Path(__file__).parent.parent / "templates")
+)
+
+
+def _slot_display_label(slot: str) -> str:
+    if slot == "3AM":
+        return "3 AM"
+    if slot == "11AM":
+        return "11 AM"
+    return slot
+
+
+def _logo_url() -> str:
+    """Prefer hosted app logo; fallback for local / misconfigured BASE_URL."""
+    base = (settings.base_url or "").strip().rstrip("/")
+    if base.startswith(("http://", "https://")):
+        return f"{base}/static/senergy-logo-white.png"
+    return "https://www.poweredbysenergy.com/senergy-logo-white.png"
+
+
+def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: str) -> str:
+    slot_label = _slot_display_label(slot)
+    greeting = "Good morning," if slot == "3AM" else "Howdy!"
+    contact_addr = (settings.email_reply_to or settings.email_sender).strip()
+    subject = f"Question about ERCOT 4CP ({slot_label}) — {forecast_interval}"
+    contact_href = f"mailto:{contact_addr}?subject={quote(subject, safe='')}"
+
+    template = _EMAIL_TEMPLATES.env.get_template("email/dashboard_report.html")
+    return template.render(
+        logo_url=_logo_url(),
+        dashboard_url=view_url,
+        date_str=forecast_interval,
+        report_version=f"{slot_label} update",
+        greeting=greeting,
+        body_slot_label=slot_label,
+        token_ttl_hours=settings.token_ttl_hours,
+        contact_href=contact_href,
+    )
 
 
 async def _get_access_token() -> str:
@@ -62,70 +105,6 @@ async def _get_access_token() -> str:
     return _cached_token
 
 
-def _html_body(view_url: str, forecast_interval: str, slot: str) -> str:
-    greeting = "Good morning," if slot == "3AM" else "Howdy!"
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-</head>
-<body style="margin:0;padding:0;background:#f5f6f8;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f8;padding:40px 0;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0"
-             style="background:#ffffff;border-radius:10px;overflow:hidden;
-                    box-shadow:0 4px 18px rgba(15,23,42,0.08);">
-
-        <!-- Header -->
-        <tr><td style="background:#1a2a4a;padding:28px 36px;">
-          <p style="margin:0;font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);
-                    letter-spacing:1.2px;text-transform:uppercase;">SENERGY</p>
-          <h1 style="margin:8px 0 0;font-size:22px;font-weight:700;color:#f9d27e;line-height:1.2;">
-            ERCOT 4CP Forecast Updated
-          </h1>
-          <p style="margin:6px 0 0;font-size:15px;font-style:italic;color:rgba(255,255,255,0.82);">
-            {forecast_interval}
-          </p>
-        </td></tr>
-
-        <!-- Body -->
-        <tr><td style="padding:32px 36px 24px;">
-          <p style="margin:0 0 16px;font-size:15px;font-family:Calibri,Arial,sans-serif;
-                    color:#0f172a;line-height:1.6;">
-            {greeting}
-          </p>
-          <p style="margin:0 0 24px;font-size:15px;font-family:Calibri,Arial,sans-serif;
-                    color:#475569;line-height:1.6;">
-            The {slot} ERCOT 4CP 7-Day forecast has been refreshed.
-            Click below to view the live dashboard — no login required.
-          </p>
-          <table cellpadding="0" cellspacing="0"><tr><td>
-            <a href="{view_url}"
-               style="display:inline-block;background:#1a2a4a;color:#ffffff;font-size:15px;
-                      font-weight:600;text-decoration:none;padding:14px 32px;border-radius:7px;
-                      letter-spacing:0.2px;">
-              View Dashboard &rarr;
-            </a>
-          </td></tr></table>
-        </td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:20px 36px 28px;border-top:1px solid #e4e6ea;">
-          <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
-            This link is personal and expires in
-            <strong>{settings.token_ttl_hours}&nbsp;hours</strong>.
-            Please do not forward it. Thank you!
-          </p>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>"""
-
-
 async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str = "11AM") -> None:
     """
     Send the dashboard link email via Microsoft Graph API.
@@ -158,7 +137,7 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
             "subject": f"Daily ERCOT 4CP 7-Day {slot} Report — {forecast_interval}",
             "body": {
                 "contentType": "HTML",
-                "content": _html_body(view_url, forecast_interval, slot),
+                "content": _render_dashboard_email_html(view_url, forecast_interval, slot),
             },
             "from": {
                 "emailAddress": {"address": settings.email_sender}
