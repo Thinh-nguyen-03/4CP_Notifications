@@ -28,7 +28,7 @@
                         <td style="height: 8px; line-height: 8px; font-size: 0; background-color: #f4b942; padding: 0; margin: 0;">&nbsp;</td>
                     </tr>
 
-                    <!-- Title (yellow box) + date + subtle slot line (single navy band) -->
+                    <!-- Title (yellow box) + forecast date range (navy band) -->
                     <tr>
                         <td align="center" bgcolor="#0f1a2f" style="padding: 24px 40px 22px 40px; background-color: #0f1a2f;">
                             <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
@@ -46,17 +46,9 @@
                                     </td>
                                 </tr>
                             </table>
-                            <p style="margin: 16px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: normal; font-style: normal; color: rgba(255,255,255,0.92);">
+                            <p style="margin: 16px 0 0 0; font-family: Constantia, 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif; font-size: 18px; font-weight: normal; font-style: italic; color: rgba(255,255,255,0.90); letter-spacing: 0.03em; line-height: 1.45;">
                                 {{ date_str }}
                             </p>
-                            <p style="margin: 8px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: normal; letter-spacing: 0.08em; color: rgba(255,255,255,0.58);">
-                                {{ report_version }}
-                            </p>
-                            <table border="0" cellpadding="0" cellspacing="0" width="200" align="center" style="margin: 16px auto 0 auto;">
-                                <tr>
-                                    <td bgcolor="#f4b942" style="height: 3px; line-height: 3px; font-size: 0;">&nbsp;</td>
-                                </tr>
-                            </table>
                         </td>
                     </tr>
 
@@ -67,7 +59,7 @@
                     <!-- Body -->
                     <tr>
                         <td align="center" style="padding: 0 48px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 24px; color: #475569;">
-                            <p style="margin: 0;">Access your ERCOT 4CP 7-Day forecast for {{ date_str }} below.</p>
+                            <p style="margin: 0;">Access the {{ report_slot }} Report for {{ send_date_str }} below.</p>
                         </td>
                     </tr>
 
@@ -82,7 +74,7 @@
                                 <tr>
                                     <td bgcolor="#1a2a4a" align="center" style="padding: 15px 32px;">
                                         <a href="{{ dashboard_url }}" target="_blank" style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: block; letter-spacing: 0.5px;">
-                                            View Report &rarr;
+                                            View Report
                                         </a>
                                     </td>
                                 </tr>
@@ -98,7 +90,7 @@
                         <td style="padding: 0 50px;">
                             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td bgcolor="#e4e6ea" style="height: 1px; line-height: 1px; font-size: 0;">&nbsp;</td>
+                                    <td bgcolor="#f4b942" style="height: 2px; line-height: 2px; font-size: 0;">&nbsp;</td>
                                 </tr>
                             </table>
                         </td>
