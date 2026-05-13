@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ERCOT 4CP Forecast — SENERGY</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, 'Segoe UI', sans-serif; background-color: #f5f6f8;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f6f8;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #e4e6ea; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);">
+
+                    <!-- Logo (matches dashboard /static logo when logo_url is BASE_URL/static/...) -->
+                    <tr>
+                        <td align="center" bgcolor="#0f1a2f" style="padding: 28px 40px 22px 40px; background-color: #0f1a2f;">
+                            <img src="{{ logo_url }}" alt="SENERGY — Powered by Schneider Engineering" width="280" style="display: block; border: 0; max-width: 100%; height: auto;" />
+                        </td>
+                    </tr>
+
+                    <!-- Gold accent (dashboard --gold) -->
+                    <tr>
+                        <td style="height: 8px; line-height: 8px; font-size: 0; background-color: #f4b942; padding: 0; margin: 0;">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 36px; line-height: 36px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <!-- Slot / window badge -->
+                    <tr>
+                        <td align="center" style="padding: 0 40px;">
+                            <table border="0" cellpadding="0" cellspacing="0" style="border: 2px solid #f4b942;">
+                                <tr>
+                                    <td bgcolor="#f9d27e" align="center" style="padding: 10px 26px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: bold; color: #1a2a4a; text-transform: uppercase; letter-spacing: 1.6px;">
+                                        {{ report_version }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 22px; line-height: 22px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <!-- Title band (dashboard: navy-deep + gold-soft serif title + white date) -->
+                    <tr>
+                        <td align="center" bgcolor="#0f1a2f" style="padding: 20px 40px 26px 40px; background-color: #0f1a2f;">
+                            <p style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: normal; font-style: italic; color: #f9d27e; letter-spacing: 0.3px; line-height: 1.2;">
+                                ERCOT 4CP 7-Day Forecast
+                            </p>
+                            <p style="margin: 12px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: bold; font-style: italic; color: rgba(255,255,255,0.94);">
+                                {{ date_str }}
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Decorative divider (gold) -->
+                    <tr>
+                        <td align="center" bgcolor="#ffffff" style="padding: 0 40px 8px 40px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="200">
+                                <tr>
+                                    <td bgcolor="#f4b942" style="height: 3px; line-height: 3px; font-size: 0;">&nbsp;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 28px; line-height: 28px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td align="left" style="padding: 0 48px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 26px; color: #0f172a;">
+                            <p style="margin: 0 0 14px 0;">{{ greeting }}</p>
+                            <p style="margin: 0; color: #475569;">
+                                The <strong style="color: #1a2a4a;">{{ body_slot_label }}</strong> ERCOT 4CP 7-Day forecast has been refreshed.
+                                Open the live dashboard below &mdash; no API key required.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 32px; line-height: 32px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <!-- CTA (navy like dashboard primary actions) -->
+                    <tr>
+                        <td align="center" style="padding: 0 40px;">
+                            <table border="0" cellpadding="0" cellspacing="0" style="border: 3px solid #1a2a4a;">
+                                <tr>
+                                    <td bgcolor="#1a2a4a" align="center" style="padding: 15px 32px;">
+                                        <a href="{{ dashboard_url }}" target="_blank" style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: block; letter-spacing: 0.5px;">
+                                            VIEW DASHBOARD &rarr;
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 28px; line-height: 28px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <!-- Info ribbon (navy-tint panel like dashboard cards) -->
+                    <tr>
+                        <td align="center" style="padding: 0 36px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-left: 6px solid #f4b942; border-top: 1px solid #e4e6ea; border-bottom: 1px solid #e4e6ea; border-right: 1px solid #e4e6ea;">
+                                <tr>
+                                    <td bgcolor="#e4eaf4" style="padding: 14px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 22px; color: #334155;">
+                                        <strong style="color: #1a2a4a;">Link security:</strong>
+                                        This link is personal and expires in <strong>{{ token_ttl_hours }}&nbsp;hours</strong>.
+                                        Please do not forward it. Thank you!
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 36px; line-height: 36px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 0 50px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td bgcolor="#e4e6ea" style="height: 1px; line-height: 1px; font-size: 0;">&nbsp;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 32px; line-height: 32px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 0 40px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: bold; color: #475569;">
+                            Questions about your forecast?
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="height: 18px; line-height: 18px; font-size: 0;">&nbsp;</td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 0 40px 40px 40px;">
+                            <table border="0" cellpadding="0" cellspacing="0" style="border: 3px solid #f4b942;">
+                                <tr>
+                                    <td bgcolor="#f4b942" align="center" style="padding: 12px 34px;">
+                                        <a href="{{ contact_href }}" style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: bold; color: #1a2a4a; text-decoration: none; display: block; letter-spacing: 0.4px;">
+                                            CONTACT US
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
