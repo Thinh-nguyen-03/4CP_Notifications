@@ -56,7 +56,6 @@ def _logo_url() -> str:
 
 def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: str) -> str:
     slot_label = _slot_display_label(slot)
-    greeting = "Good morning," if slot == "3AM" else "Howdy!"
     contact_addr = (settings.email_reply_to or settings.email_sender).strip()
     subject = f"Question about ERCOT 4CP ({slot_label}) — {forecast_interval}"
     contact_href = f"mailto:{contact_addr}?subject={quote(subject, safe='')}"
@@ -67,9 +66,6 @@ def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: st
         dashboard_url=view_url,
         date_str=forecast_interval,
         report_version=f"{slot} Report",
-        greeting=greeting,
-        body_slot_label=slot_label,
-        token_ttl_hours=settings.token_ttl_hours,
         contact_href=contact_href,
     )
 
