@@ -37,7 +37,7 @@
                                         <table border="0" cellpadding="0" cellspacing="0">
                                             <tr>
                                                 <td bgcolor="#f9d27e" align="center" style="padding: 12px 22px 14px 22px;">
-                                                    <p style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: normal; font-style: italic; color: #1a2a4a; letter-spacing: 0.2px; line-height: 1.25;">
+                                                    <p style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: bold; font-style: italic; color: #1a2a4a; letter-spacing: 0.2px; line-height: 1.25;">
                                                         ERCOT 4CP 7-Day Forecast
                                                     </p>
                                                 </td>
@@ -66,12 +66,8 @@
 
                     <!-- Body -->
                     <tr>
-                        <td align="left" style="padding: 0 48px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 26px; color: #0f172a;">
-                            <p style="margin: 0 0 14px 0;">{{ greeting }}</p>
-                            <p style="margin: 0; color: #475569;">
-                                The <strong style="color: #1a2a4a;">{{ body_slot_label }}</strong> ERCOT 4CP 7-Day forecast has been refreshed.
-                                Open the live dashboard below &mdash; no API key required.
-                            </p>
+                        <td align="center" style="padding: 0 48px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 24px; color: #475569;">
+                            <p style="margin: 0;">Access your ERCOT 4CP 7-Day forecast for {{ date_str }} below.</p>
                         </td>
                     </tr>
 
@@ -86,7 +82,7 @@
                                 <tr>
                                     <td bgcolor="#1a2a4a" align="center" style="padding: 15px 32px;">
                                         <a href="{{ dashboard_url }}" target="_blank" style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: block; letter-spacing: 0.5px;">
-                                            VIEW DASHBOARD &rarr;
+                                            View Report &rarr;
                                         </a>
                                     </td>
                                 </tr>
@@ -96,25 +92,6 @@
 
                     <tr>
                         <td style="height: 28px; line-height: 28px; font-size: 0;">&nbsp;</td>
-                    </tr>
-
-                    <!-- Info ribbon (navy-tint panel like dashboard cards) -->
-                    <tr>
-                        <td align="center" style="padding: 0 36px;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-left: 6px solid #f4b942; border-top: 1px solid #e4e6ea; border-bottom: 1px solid #e4e6ea; border-right: 1px solid #e4e6ea;">
-                                <tr>
-                                    <td bgcolor="#e4eaf4" style="padding: 14px 20px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 22px; color: #334155;">
-                                        <strong style="color: #1a2a4a;">Link security:</strong>
-                                        This link is personal and expires in <strong>{{ token_ttl_hours }}&nbsp;hours</strong>.
-                                        Please do not forward it. Thank you!
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="height: 36px; line-height: 36px; font-size: 0;">&nbsp;</td>
                     </tr>
 
                     <tr>
@@ -133,7 +110,7 @@
 
                     <tr>
                         <td align="center" style="padding: 0 40px; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: bold; color: #475569;">
-                            Questions about your forecast?
+                            Questions about your report?
                         </td>
                     </tr>
 
