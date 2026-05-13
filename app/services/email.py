@@ -14,10 +14,14 @@ from pathlib import Path
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import select
+
 import httpx
 from fastapi.templating import Jinja2Templates
 
 from app.config import settings
+from app.database import async_session_maker
+from app.models import EmailList
 
 log = logging.getLogger("email")
 
@@ -36,6 +40,17 @@ def _format_send_date_ct() -> str:
     """Calendar date in US Central when the email is sent (ERCOT reporting context)."""
     d = datetime.now(ZoneInfo("America/Chicago")).date()
     return f"{d.strftime('%B')} {d.day}, {d.year}"
+
+
+def _parse_address_list(raw: str) -> list[str]:
+    """
+    Split a recipient list from env (comma and/or semicolon separated).
+    Trims whitespace; drops empty entries.
+    """
+    if not raw or not str(raw).strip():
+        return []
+    text = str(raw).replace(";", ",")
+    return [part.strip() for part in text.split(",") if part.strip()]
 
 
 def _slot_display_label(slot: str) -> str:
@@ -65,9 +80,51 @@ def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: st
         logo_url=_logo_url(),
         dashboard_url=view_url,
         date_str=forecast_interval,
-        report_version=f"{slot} Report",
+        send_date_str=_format_send_date_ct(),
+        report_slot=slot,
         contact_href=contact_href,
     )
+
+
+async def _bcc_recipients() -> list[str]:
+    """
+    BCC list: all addresses in `email_list` (case-insensitive dedupe, stable order).
+    If USE_MOCK_FETCHERS is true, skip the table and use EMAIL_BCC only (safe test sends).
+    If the table has no rows (non-mock), fall back to EMAIL_BCC env parsing.
+    """
+    if settings.use_mock_fetchers:
+        addrs = _parse_address_list(settings.email_bcc)
+        if addrs:
+            log.info(
+                "BCC: USE_MOCK_FETCHERS — using %d address(es) from EMAIL_BCC (email_list ignored)",
+                len(addrs),
+            )
+        return addrs
+
+    try:
+        async with async_session_maker() as session:
+            result = await session.execute(select(EmailList.email).order_by(EmailList.email))
+            raw = [row[0].strip() for row in result.all() if row[0] and str(row[0]).strip()]
+    except Exception as e:
+        log.warning("email_list unreadable (%s); using EMAIL_BCC only", e)
+        return _parse_address_list(settings.email_bcc)
+
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for addr in raw:
+        key = addr.lower()
+        if key not in seen:
+            seen.add(key)
+            ordered.append(addr)
+
+    if ordered:
+        log.info("BCC: using %d addresses from email_list", len(ordered))
+        return ordered
+
+    env_addrs = _parse_address_list(settings.email_bcc)
+    if env_addrs:
+        log.info("BCC: email_list empty; using %d addresses from EMAIL_BCC", len(env_addrs))
+    return env_addrs
 
 
 async def _get_access_token() -> str:
@@ -113,7 +170,7 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
     Send the dashboard link email via Microsoft Graph API.
 
     TO  → settings.email_primary_to  (visible recipient, e.g. EnergyManagement@…)
-    BCC → settings.email_bcc         (comma-separated client list — hidden from each other)
+    BCC → `email_list` rows, or EMAIL_BCC if empty. If USE_MOCK_FETCHERS, always EMAIL_BCC only.
     """
     # Guard: check required config
     missing = [
@@ -129,9 +186,12 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
         log.warning("Email skipped — missing config: %s", ", ".join(missing))
         return
 
-    bcc_addresses = [e.strip() for e in settings.email_bcc.split(",") if e.strip()]
+    bcc_addresses = await _bcc_recipients()
     if not bcc_addresses:
-        log.warning("EMAIL_BCC not set — email skipped")
+        log.warning(
+            "No BCC recipients: set EMAIL_BCC (required when USE_MOCK_FETCHERS), "
+            "or add rows to email_list"
+        )
         return
 
     # Build Graph API message payload (mirrors _build_email_message from the local script)
