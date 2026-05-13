@@ -29,11 +29,11 @@ class Settings(BaseSettings):
     # Email addresses
     email_sender: str = ""         # mailbox used to send  e.g. pnguyen@poweredbysenergy.com
     email_primary_to: str = ""     # visible TO line       e.g. EnergyManagement@poweredbysenergy.com
-    email_bcc: str = ""            # comma-separated BCC list (the actual client recipients)
+    email_bcc: str = ""            # Fallback BCC list when email_list table is empty (comma/semicolon-separated)
     email_reply_to: str = ""       # optional reply-to (leave blank to use email_sender)
 
     # Dashboard link settings
-    base_url: str = "http://localhost:8000"   # public root, e.g. https://fourcp.onrender.com
+    base_url: str = "http://localhost:8000"   # public root; env BASE_URL must match Render hostname
     token_ttl_hours: int = 36                 # how long a view link stays valid
 
 
