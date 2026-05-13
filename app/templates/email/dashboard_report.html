@@ -16,9 +16,9 @@
             <td align="center" style="padding: 40px 20px;">
                 <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #e4e6ea; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);">
 
-                    <!-- Logo (matches dashboard /static logo when logo_url is BASE_URL/static/...) -->
+                    <!-- Logo (color logo on white — matches app/static/senergy-logo.png) -->
                     <tr>
-                        <td align="center" bgcolor="#0f1a2f" style="padding: 28px 40px 22px 40px; background-color: #0f1a2f;">
+                        <td align="center" bgcolor="#ffffff" style="padding: 28px 40px 24px 40px; background-color: #ffffff;">
                             <img src="{{ logo_url }}" alt="SENERGY — Powered by Schneider Engineering" width="280" style="display: block; border: 0; max-width: 100%; height: auto;" />
                         </td>
                     </tr>
@@ -28,43 +28,31 @@
                         <td style="height: 8px; line-height: 8px; font-size: 0; background-color: #f4b942; padding: 0; margin: 0;">&nbsp;</td>
                     </tr>
 
+                    <!-- Title (yellow box) + date + subtle slot line (single navy band) -->
                     <tr>
-                        <td style="height: 36px; line-height: 36px; font-size: 0;">&nbsp;</td>
-                    </tr>
-
-                    <!-- Slot / window badge -->
-                    <tr>
-                        <td align="center" style="padding: 0 40px;">
-                            <table border="0" cellpadding="0" cellspacing="0" style="border: 2px solid #f4b942;">
+                        <td align="center" bgcolor="#0f1a2f" style="padding: 24px 40px 22px 40px; background-color: #0f1a2f;">
+                            <table border="0" cellpadding="0" cellspacing="0" align="center" style="margin: 0 auto;">
                                 <tr>
-                                    <td bgcolor="#f9d27e" align="center" style="padding: 10px 26px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: bold; color: #1a2a4a; text-transform: uppercase; letter-spacing: 1.6px;">
-                                        {{ report_version }}
+                                    <td style="border: 2px solid #f4b942;">
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td bgcolor="#f9d27e" align="center" style="padding: 12px 22px 14px 22px;">
+                                                    <p style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: normal; font-style: italic; color: #1a2a4a; letter-spacing: 0.2px; line-height: 1.25;">
+                                                        ERCOT 4CP 7-Day Forecast
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="height: 22px; line-height: 22px; font-size: 0;">&nbsp;</td>
-                    </tr>
-
-                    <!-- Title band (dashboard: navy-deep + gold-soft serif title + white date) -->
-                    <tr>
-                        <td align="center" bgcolor="#0f1a2f" style="padding: 20px 40px 26px 40px; background-color: #0f1a2f;">
-                            <p style="margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: normal; font-style: italic; color: #f9d27e; letter-spacing: 0.3px; line-height: 1.2;">
-                                ERCOT 4CP 7-Day Forecast
-                            </p>
-                            <p style="margin: 12px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: bold; font-style: italic; color: rgba(255,255,255,0.94);">
+                            <p style="margin: 16px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 17px; font-weight: normal; font-style: normal; color: rgba(255,255,255,0.92);">
                                 {{ date_str }}
                             </p>
-                        </td>
-                    </tr>
-
-                    <!-- Decorative divider (gold) -->
-                    <tr>
-                        <td align="center" bgcolor="#ffffff" style="padding: 0 40px 8px 40px;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="200">
+                            <p style="margin: 8px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: normal; letter-spacing: 0.08em; color: rgba(255,255,255,0.58);">
+                                {{ report_version }}
+                            </p>
+                            <table border="0" cellpadding="0" cellspacing="0" width="200" align="center" style="margin: 16px auto 0 auto;">
                                 <tr>
                                     <td bgcolor="#f4b942" style="height: 3px; line-height: 3px; font-size: 0;">&nbsp;</td>
                                 </tr>
