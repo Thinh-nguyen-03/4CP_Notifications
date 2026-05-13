@@ -625,17 +625,22 @@
 
 </main>
 
+<script type="application/json" id="fourcp-view-token">{{ view_token | default('') | tojson }}</script>
 <script>
 const $ = (id) => document.getElementById(id);
 const KEY_STORAGE = 'fourcp_api_key';
-const DANGER = '#b91c1c';
 
 // Injected by the server when the page is served via a /r/{token} email link.
 // Empty string means the visitor is using the manual API-key login flow.
-const VIEW_TOKEN = "{{ view_token | default('') }}";
+const VIEW_TOKEN = JSON.parse(document.getElementById('fourcp-view-token').textContent);
 
 let apiKey = localStorage.getItem(KEY_STORAGE) || '';
 let chartInstance = null;
+
+function _reportBasePath() {
+  const t = encodeURIComponent(VIEW_TOKEN);
+  return `/api/report/${t}`;
+}
 
 async function apiFetch(path) {
   let url = path;
@@ -643,10 +648,10 @@ async function apiFetch(path) {
 
   if (VIEW_TOKEN) {
     if (path === '/api/latest') {
-      url = `/api/report/${VIEW_TOKEN}`;
+      url = _reportBasePath();
     } else if (path.startsWith('/api/predictions')) {
       const slot = new URLSearchParams(path.split('?')[1] || '').get('slot');
-      url = `/api/report/${VIEW_TOKEN}/predictions${slot ? `?slot=${slot}` : ''}`;
+      url = `${_reportBasePath()}/predictions${slot ? `?slot=${encodeURIComponent(slot)}` : ''}`;
     }
   } else {
     headers = { 'Authorization': `Bearer ${apiKey}` };
