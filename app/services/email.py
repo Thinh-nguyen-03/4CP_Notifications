@@ -12,6 +12,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import quote
+from zoneinfo import ZoneInfo
 
 import httpx
 from fastapi.templating import Jinja2Templates
@@ -31,6 +32,12 @@ _EMAIL_TEMPLATES = Jinja2Templates(
 )
 
 
+def _format_send_date_ct() -> str:
+    """Calendar date in US Central when the email is sent (ERCOT reporting context)."""
+    d = datetime.now(ZoneInfo("America/Chicago")).date()
+    return f"{d.strftime('%B')} {d.day}, {d.year}"
+
+
 def _slot_display_label(slot: str) -> str:
     if slot == "3AM":
         return "3 AM"
@@ -40,11 +47,11 @@ def _slot_display_label(slot: str) -> str:
 
 
 def _logo_url() -> str:
-    """Prefer hosted app logo; fallback for local / misconfigured BASE_URL."""
+    """Hosted color logo for light header (`/static/senergy-logo.png`)."""
     base = (settings.base_url or "").strip().rstrip("/")
     if base.startswith(("http://", "https://")):
-        return f"{base}/static/senergy-logo-white.png"
-    return "https://www.poweredbysenergy.com/senergy-logo-white.png"
+        return f"{base}/static/senergy-logo.png"
+    return "https://www.poweredbysenergy.com/senergy-logo.png"
 
 
 def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: str) -> str:
@@ -59,7 +66,7 @@ def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: st
         logo_url=_logo_url(),
         dashboard_url=view_url,
         date_str=forecast_interval,
-        report_version=f"{slot_label} update",
+        report_version=f"{slot} Report",
         greeting=greeting,
         body_slot_label=slot_label,
         token_ttl_hours=settings.token_ttl_hours,
@@ -134,7 +141,7 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
     # Build Graph API message payload (mirrors _build_email_message from the local script)
     message: dict = {
         "message": {
-            "subject": f"Daily ERCOT 4CP 7-Day {slot} Report — {forecast_interval}",
+            "subject": f"Daily ERCOT 4CP 7-Day {slot} Report - {_format_send_date_ct()}",
             "body": {
                 "contentType": "HTML",
                 "content": _render_dashboard_email_html(view_url, forecast_interval, slot),
