@@ -170,7 +170,8 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
     Send the dashboard link email via Microsoft Graph API.
 
     TO  → settings.email_primary_to  (visible recipient, e.g. EnergyManagement@…)
-    BCC → `email_list` rows, or EMAIL_BCC if empty. If USE_MOCK_FETCHERS, always EMAIL_BCC only.
+    BCC → `email_list` rows, or EMAIL_BCC if empty. If USE_MOCK_FETCHERS, only EMAIL_BCC
+    (if unset, email is sent with TO only — no BCC).
     """
     # Guard: check required config
     missing = [
@@ -188,31 +189,31 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
 
     bcc_addresses = await _bcc_recipients()
     if not bcc_addresses:
-        log.warning(
-            "No BCC recipients: set EMAIL_BCC (required when USE_MOCK_FETCHERS), "
-            "or add rows to email_list"
-        )
-        return
+        if settings.use_mock_fetchers:
+            log.info("USE_MOCK_FETCHERS: EMAIL_BCC empty — sending without BCC recipients")
+        else:
+            log.warning("No BCC recipients: add rows to email_list or set EMAIL_BCC")
+            return
 
-    # Build Graph API message payload (mirrors _build_email_message from the local script)
-    message: dict = {
-        "message": {
-            "subject": f"Daily ERCOT 4CP 7-Day {slot} Report - {_format_send_date_ct()}",
-            "body": {
-                "contentType": "HTML",
-                "content": _render_dashboard_email_html(view_url, forecast_interval, slot),
-            },
-            "from": {
-                "emailAddress": {"address": settings.email_sender}
-            },
-            "toRecipients": [
-                {"emailAddress": {"address": settings.email_primary_to}}
-            ],
-            "bccRecipients": [
-                {"emailAddress": {"address": addr}} for addr in bcc_addresses
-            ],
-        }
+    msg_inner: dict = {
+        "subject": f"Daily ERCOT 4CP 7-Day {slot} Report - {_format_send_date_ct()}",
+        "body": {
+            "contentType": "HTML",
+            "content": _render_dashboard_email_html(view_url, forecast_interval, slot),
+        },
+        "from": {
+            "emailAddress": {"address": settings.email_sender}
+        },
+        "toRecipients": [
+            {"emailAddress": {"address": settings.email_primary_to}}
+        ],
     }
+    if bcc_addresses:
+        msg_inner["bccRecipients"] = [
+            {"emailAddress": {"address": addr}} for addr in bcc_addresses
+        ]
+
+    message: dict = {"message": msg_inner}
 
     if settings.email_reply_to:
         message["message"]["replyTo"] = [
@@ -233,12 +234,19 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
         )
 
     if resp.status_code == 202:
-        log.info(
-            "Graph API: email sent to TO=%s + %d BCC recipients for %s",
-            settings.email_primary_to,
-            len(bcc_addresses),
-            forecast_interval,
-        )
+        if bcc_addresses:
+            log.info(
+                "Graph API: email sent to TO=%s + %d BCC recipients for %s",
+                settings.email_primary_to,
+                len(bcc_addresses),
+                forecast_interval,
+            )
+        else:
+            log.info(
+                "Graph API: email sent to TO=%s (no BCC) for %s",
+                settings.email_primary_to,
+                forecast_interval,
+            )
     else:
         log.error("Graph API sendMail failed %s: %s", resp.status_code, resp.text[:400])
         resp.raise_for_status()
