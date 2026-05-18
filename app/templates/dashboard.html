@@ -3,41 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ERCOT 4CP Forecast — SENERGY</title>
+  <title>ERCOT 4CP Forecast — SENERGY Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --page-bg: #f5f6f8;
-      --card: #ffffff;
-      --text: #0f172a;
-      --text-2: #475569;
-      --text-3: #64748b;
-      --text-4: #94a3b8;
-      --border: #e4e6ea;
-      --border-2: #d6d9df;
-      --navy: #1a2a4a;
-      --navy-deep: #0f1a2f;
-      --navy-soft: #2a3a5a;
-      --gold: #f4b942;
+      --bg-1: #0f1b33;
+      --bg-2: #0b1530;
+      --ink: #e5e7eb;
+      --muted: #d4e0ec;
+      --gold: #f4b000;
       --gold-soft: #f9d27e;
-      --danger: #b91c1c;
-      --neutral: #94a3b8;
-
-      /* Ribbons / note panel — light but visibly navy (not neutral gray) */
-      --ribbon-tint: #e4eaf4;
-      --ribbon-tint: color-mix(in srgb, var(--navy) 11%, white);
-      --ribbon-edge: #c8d4e8;
-      --ribbon-edge: color-mix(in srgb, var(--navy) 20%, white);
-
+      --gold-700: #d39a00;
       --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
       --font-ui: 'DM Sans', var(--font);
-
-      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.05);
-      --shadow-hover: 0 1px 2px rgba(15, 23, 42, 0.973), 0 6px 18px rgba(15, 23, 42, 0.08);
-
+      --card: rgba(14, 22, 33, 0.85);
+      --card-stroke: rgba(255, 255, 255, 0.04);
+      --surface: #0e1621;
+      --danger: #f87171;
+      --danger-bg: rgba(248, 113, 113, 0.12);
+      --neutral: #7293b0;
+      --radius: 14px;
+      --shadow: 0 25px 80px rgba(0, 0, 0, 0.35), 0 2px 0 rgba(255, 255, 255, 0.02) inset;
       --row-label-width: 112px;
       --peaks-label-width: 160px;
     }
@@ -45,88 +34,125 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      font-family: var(--font);
-      background: var(--page-bg);
-      color: var(--text);
+      font-family: var(--font-ui);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(255, 255, 255, 0.04), transparent 60%),
+        radial-gradient(900px 700px at 85% 30%, rgba(62, 121, 179, 0.10), transparent 55%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      min-height: 100vh;
       font-size: 14px;
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
-    }
-    body {
-      background: linear-gradient(180deg, var(--navy-deep) 0px, var(--navy-deep) 140px, #1e3050 220px, #dde2ea 420px, var(--page-bg) 520px);
-      background-attachment: fixed;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Masthead — sits flush on the dark page background, no hard shelf edge */
+    /* Masthead — same layout/fonts as dashboard.html, with portal gold bottom border */
     .masthead {
-      background: transparent;
-      border-bottom: none;
-      padding: 28px 40px 24px;
+      background: var(--bg-1);
+      border-bottom: 3px solid var(--gold);
+      padding: 18px 36px 16px;
       display: flex;
       align-items: center;
-      gap: 36px;
+      gap: 28px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     }
+
     .masthead-logo {
       flex: 0 0 auto;
     }
+
     .masthead-logo img {
-      height: 56px;
+      height: 48px;
       display: block;
     }
+
     .masthead-divider {
       width: 1px;
-      height: 56px;
+      height: 48px;
       background: rgba(255, 255, 255, 0.14);
       flex: 0 0 auto;
     }
+
     .masthead-title {
       flex: 1;
       min-width: 0;
     }
+
     .masthead-title h1 {
       font-family: 'DM Serif Display', Georgia, serif;
-      font-size: 28px;
+      font-size: 25px;
       font-weight: 400;
       font-style: italic;
-      color: var(--gold-soft);
+      color: var(--gold);
       letter-spacing: 0.2px;
       line-height: 1.15;
     }
+
     .masthead-title .date {
       margin-top: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 19px;
-      font-weight: 400;
-      font-style: italic;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      max-width: 100%;
+      padding: 7px 14px 7px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(244, 176, 0, 0.22);
+      border-radius: 6px;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      font-style: normal;
       line-height: 1.35;
-      color: rgba(255, 255, 255, 0.94);
+      color: #e8edf4;
       letter-spacing: 0.02em;
-      font-variant-numeric: lining-nums;
+      font-variant-numeric: tabular-nums;
     }
+
+    .masthead-title .date::before {
+      content: 'Forecast period';
+      flex-shrink: 0;
+      padding: 3px 8px;
+      background: rgba(244, 176, 0, 0.14);
+      border-radius: 4px;
+      font-family: var(--font-ui);
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold);
+      line-height: 1.2;
+    }
+
     .masthead-meta {
       display: flex;
       align-items: center;
       flex: 0 0 auto;
     }
+
     .masthead-actions { display: flex; align-items: center; gap: 10px; }
+
     .masthead-actions .stamp {
       font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 400;
-      color: rgba(255, 255, 255, 0.70);
+      color: rgba(255, 255, 255, 0.78);
       font-variant-numeric: tabular-nums;
       letter-spacing: 0.3px;
       padding-right: 12px;
-      border-right: 1px solid rgba(255,255,255,0.14);
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
       margin-right: 4px;
     }
-    .masthead-actions .stamp strong { color: rgba(255,255,255,0.92); font-weight: 600; }
+
+    .masthead-actions .stamp strong { color: rgba(255, 255, 255, 0.92); font-weight: 600; }
+
     .icon-btn {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.16);
       color: rgba(255, 255, 255, 0.85);
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
@@ -134,268 +160,343 @@
       justify-content: center;
       transition: all 0.15s ease;
     }
+
     .icon-btn:hover {
       background: rgba(255, 255, 255, 0.12);
       border-color: rgba(255, 255, 255, 0.28);
       color: white;
     }
-    .icon-btn svg { width: 15px; height: 15px; }
 
-    /* Page container */
-    .container { max-width: 1600px; margin: 0 auto; padding: 28px 32px 72px; }
+    .icon-btn svg { width: 14px; height: 14px; }
 
-    /* Cards */
+    /* Layout */
+    .container {
+      position: relative;
+      max-width: 1600px;
+      width: 100%;
+      margin: 24px auto 48px;
+      padding: 0 22px;
+    }
+
+    /* Cards — portal dark surfaces */
     .card {
-      font-family: var(--font-ui);
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-top: 14px solid var(--ribbon-tint);
-      border-bottom: 14px solid var(--ribbon-tint);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
+      background: linear-gradient(180deg, rgba(14, 22, 33, 0.85), rgba(14, 22, 33, 0.75));
+      border: 1px solid var(--card-stroke);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius);
       margin-bottom: 24px;
       overflow: hidden;
     }
+
     .card-head {
-      padding: 22px 28px 16px;
+      padding: 18px 24px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, #fbfbfc 0%, #ffffff 100%);
+      gap: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(17, 24, 39, 0.35);
     }
+
     .card-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      color: var(--navy);
+      color: var(--gold);
       text-transform: uppercase;
-      letter-spacing: 0.9px;
-      padding-bottom: 7px;
+      letter-spacing: 1px;
+      padding-bottom: 6px;
       border-bottom: 2px solid var(--gold);
       display: inline-block;
     }
-    .card-body { padding: 16px 28px; }
 
-    .card:has(.explain) .card-body {
-      padding: 24px 32px 28px;
-    }
+    .card-body { padding: 20px 24px; }
+
+    /* Explain / score bands — dark variant of 4CP layout */
     .explain {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 28px 56px;
+      gap: 24px 40px;
       align-items: start;
     }
+
     .explain-group {
       display: flex;
       flex-direction: column;
-      align-items: stretch;
       gap: 0;
-      padding: 0;
-      margin: 0;
     }
-    .explain-group + .explain-group {
-      border-left: none;
-      padding-left: 0;
-    }
+
     .explain-group.note-group {
       grid-column: 1 / -1;
       display: grid;
       grid-template-columns: auto minmax(0, 1fr);
-      gap: 12px 28px;
+      gap: 12px 24px;
       align-items: start;
-      padding: 18px 24px 20px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      padding: 16px 20px;
+      background: rgba(17, 24, 39, 0.55);
+      border: 1px solid rgba(244, 176, 0, 0.15);
+      border-radius: 10px;
       margin-top: 4px;
     }
+
     .explain-group.note-group > .explain-h {
       margin: 0;
-      padding: 4px 0 0;
+      padding: 2px 0 0;
       border-bottom: none;
-      align-self: start;
     }
+
     .explain-h {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      color: var(--text-3);
+      color: var(--gold);
       text-transform: uppercase;
-      letter-spacing: 0.85px;
+      letter-spacing: 1.1px;
       margin: 0 0 14px;
       padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       white-space: nowrap;
     }
+
     .explain-items {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
+
     .explain-row {
       display: grid;
       grid-template-columns: auto 1fr;
       align-items: start;
-      gap: 10px 18px;
-      font-size: 14px;
-      color: var(--text-2);
+      gap: 10px 16px;
+      font-size: 13px;
+      color: var(--muted);
       line-height: 1.55;
     }
+
     .explain-row .label {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       font-weight: 600;
-      color: var(--text);
+      color: var(--ink);
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
-      min-width: 7.5rem;
+      min-width: 7rem;
     }
+
     .explain-row .dot {
       width: 9px;
       height: 9px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .explain-row .dot.danger  { background: var(--danger); }
+
+    .explain-row .dot.danger { background: var(--danger); }
     .explain-row .dot.neutral { background: var(--neutral); }
-    .explain-row .desc strong { color: var(--text); font-weight: 600; }
+    .explain-row .desc strong { color: var(--ink); font-weight: 600; }
+
     .note-row {
-      font-size: 14px;
-      color: var(--text-3);
+      font-size: 13px;
+      color: var(--muted);
       line-height: 1.6;
       font-style: italic;
       max-width: 72ch;
     }
-    .note-row strong { color: var(--text-2); font-weight: 600; font-style: normal; }
 
-    /* Tables */
-    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .note-row strong {
+      color: var(--ink);
+      font-weight: 600;
+      font-style: normal;
+    }
+
+    /* Slot toggle — low profile but readable on dark card head */
+    .slot-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      padding: 3px;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      box-shadow: none;
+    }
+
+    .slot-toggle button {
+      background: transparent;
+      border: none;
+      padding: 6px 14px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.35px;
+      color: rgba(255, 255, 255, 0.82);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.12s ease, background 0.12s ease;
+    }
+
+    .slot-toggle button + button {
+      border-left: none;
+    }
+
+    .slot-toggle button:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .slot-toggle button.active {
+      color: #111827;
+      background: var(--gold);
+      box-shadow: 0 0 0 1px rgba(244, 176, 0, 0.35);
+    }
+
+    /* Tables — portal dark table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .data-table {
+      font-family: var(--font-ui);
+    }
+
     .data-table thead th {
-      padding: 13px 10px;
-      font-size: 13px;
+      padding: 12px 10px;
+      font-family: var(--font-ui);
+      font-size: 11px;
       font-weight: 700;
-      color: var(--text-3);
+      color: var(--gold);
       text-transform: uppercase;
       letter-spacing: 0.55px;
       text-align: center;
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
+      background: rgba(17, 24, 39, 0.6);
+      border-bottom: 2px solid rgba(244, 176, 0, 0.35);
     }
+
     .data-table tbody td {
-      padding: 15px 10px;
-      font-size: 16px;
+      padding: 14px 10px;
+      font-family: var(--font-ui);
+      font-size: 14px;
       font-weight: 500;
-      color: var(--text);
+      color: var(--ink);
       text-align: center;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+      letter-spacing: 0.02em;
     }
+
     .data-table th:first-child,
     .data-table td:first-child {
       text-align: left;
-      padding-left: 28px;
-    }
-    .data-table thead th:first-child { background: var(--card); }
-    .data-table tbody td:first-child {
-      font-size: 15.5px;
-      font-weight: 700;
-      color: var(--navy);
-      letter-spacing: 0.1px;
-      white-space: nowrap;
-    }
-    .data-table .empty { color: var(--text-4); font-weight: 400; }
-    .data-table tbody tr:hover td { background: #f8fafc; transition: background 0.1s; }
-    .forecast-table tbody tr:hover td.forecast-col-hi { background: #ffe4e6; }
-    .col-head-danger { color: var(--danger) !important; }
-    /* Whole column tint when 4CP score ≥ 90 */
-    .forecast-table th.forecast-col-hi,
-    .forecast-table td.forecast-col-hi {
-      background-color: #fff1f2;
-    }
-    .forecast-table tbody tr:hover td.forecast-col-hi {
-      background-color: #ffe4e6;
+      padding-left: 24px;
     }
 
-    /* Peaks table */
+    .data-table tbody td:first-child {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .data-table .empty { color: var(--muted); font-weight: 400; }
+    .data-table tbody tr:hover td { background: rgba(31, 41, 55, 0.45); transition: background 0.1s; }
+
+    .forecast-table th.forecast-col-hi,
+    .forecast-table td.forecast-col-hi {
+      background-color: var(--danger-bg);
+    }
+
+    .forecast-table tbody tr:hover td.forecast-col-hi {
+      background-color: rgba(248, 113, 113, 0.18);
+    }
+
+    .col-head-danger { color: var(--danger) !important; }
+
     .peaks-table col.label-col { width: var(--peaks-label-width); }
+
     .peaks-table thead th:not(:first-child) {
-      font-size: 17px;
+      font-family: var(--font-ui);
+      font-size: 16px;
       font-weight: 700;
-      color: var(--navy);
+      color: #ffffff;
       letter-spacing: 0.15px;
       text-transform: none;
       padding-top: 14px;
       padding-bottom: 14px;
     }
 
-    /* Forecast table */
     .forecast-table col.label-col { width: var(--row-label-width); }
-    .forecast-table thead th {
-      border-top: 1px solid var(--border);
-    }
-    /* Breathing room before first date; col <colgroup> width stays chart-synced */
+
     .forecast-table thead th:first-child,
     .forecast-table tbody td:first-child {
       padding-right: 22px;
     }
-    /* Date columns + data: center under chart category / bar centers */
+
     .forecast-table thead th:not(:first-child):not(:last-child),
     .forecast-table tbody td:not(:first-child):not(:last-child) {
       text-align: center;
     }
+
     .forecast-table thead th .day-num {
       display: block;
-      font-size: 15.5px;
+      font-family: var(--font-ui);
+      font-size: 14px;
       font-weight: 600;
-      color: var(--text);
+      color: var(--ink);
       margin-top: 4px;
-      letter-spacing: 0;
+      letter-spacing: 0.02em;
       text-transform: none;
     }
 
-    .score-danger  { color: var(--danger); font-weight: 700; }
-    .score-neutral { color: var(--text);   font-weight: 600; }
-
-    /* Forecast block — chart + table sharing the same horizontal frame */
-    .forecast-block {
-      padding: 0;
+    .score-danger {
+      color: var(--danger);
+      font-weight: 700;
+      font-family: var(--font-ui);
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
     }
+
+    .score-neutral {
+      color: var(--ink);
+      font-weight: 600;
+      font-family: var(--font-ui);
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+    }
+
+    /* Forecast chart block */
+    .forecast-block { padding: 0; }
+
     .chart-wrapper {
       height: 300px;
       position: relative;
       padding: 16px 0 0;
-      background: white;
+      background: var(--surface);
     }
 
-    /* Slot toggle */
-    .slot-toggle {
-      display: inline-flex;
-      border: 1px solid var(--border-2);
-      border-radius: 6px;
-      overflow: hidden;
-      background: white;
+    .data-attribution {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--muted);
+      font-style: italic;
+      margin: 8px 0 0;
     }
-    .slot-toggle button {
-      background: transparent;
-      border: none;
-      padding: 7px 16px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-2);
-      cursor: pointer;
-      font-family: inherit;
-      letter-spacing: 0.3px;
-      transition: all 0.12s ease;
+
+    .data-attribution strong {
+      font-weight: 700;
+      font-style: normal;
+      color: var(--ink);
     }
-    .slot-toggle button + button { border-left: 1px solid var(--border); }
-    .slot-toggle button:hover { background: var(--page-bg); color: var(--text); }
-    .slot-toggle button.active { background: var(--navy); color: white; }
 
     /* Auth overlay */
     .auth-overlay {
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, rgba(26, 42, 74, 0.95), rgba(15, 26, 47, 0.97));
+      background: rgba(11, 21, 48, 0.92);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       display: flex;
@@ -404,111 +505,107 @@
       z-index: 100;
       padding: 20px;
     }
+
     .auth-card {
-      background: white;
-      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(31, 41, 55, 0.98) 0%, rgba(17, 24, 39, 0.98) 100%);
+      border: 1.5px solid var(--gold);
+      border-radius: 14px;
       padding: 36px;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
     }
+
     .auth-card h2 {
-      font-size: 22px;
-      font-weight: 700;
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 24px;
+      font-weight: 400;
+      font-style: italic;
       margin-bottom: 6px;
-      color: var(--navy);
-      letter-spacing: -0.3px;
+      color: var(--gold);
     }
+
     .auth-card p {
       font-size: 14px;
-      color: var(--text-3);
+      color: var(--muted);
       margin-bottom: 22px;
       line-height: 1.5;
     }
+
     .auth-card label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      color: var(--text-3);
+      color: var(--gold);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 1px;
       display: block;
       margin-bottom: 8px;
     }
+
     .auth-card input {
       width: 100%;
       padding: 12px 14px;
-      border: 1px solid var(--border-2);
-      border-radius: 6px;
+      border: 1.5px solid rgba(75, 85, 99, 0.5);
+      border-radius: 8px;
       font-size: 14px;
       font-family: inherit;
       margin-bottom: 14px;
-      color: var(--text);
+      color: var(--ink);
+      background: rgba(17, 24, 39, 0.8);
     }
+
     .auth-card input:focus {
       outline: none;
-      border-color: var(--navy);
-      box-shadow: 0 0 0 3px rgba(26, 42, 74, 0.08);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(244, 176, 0, 0.15);
     }
+
     .auth-card button {
       width: 100%;
       padding: 12px;
-      background: var(--navy);
-      color: white;
+      background: var(--gold);
+      color: #111827;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       font-family: inherit;
       transition: background 0.15s;
     }
-    .auth-card button:hover { background: var(--navy-deep); }
+
+    .auth-card button:hover { background: var(--gold-700); }
     .auth-card button:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .auth-error {
       font-size: 13px;
       color: var(--danger);
       margin-top: 10px;
       text-align: center;
     }
+
     .hidden { display: none !important; }
 
     @media (max-width: 900px) {
-      .masthead { padding: 16px 18px; gap: 16px; flex-wrap: wrap; }
+      .masthead { padding: 14px 18px; gap: 16px; flex-wrap: wrap; }
       .masthead-divider { display: none; }
       .masthead-title h1 { font-size: 20px; }
-      .masthead-title .date { font-size: 16px; margin-top: 6px; }
-      .masthead-logo img { height: 40px; }
-      .masthead-actions .stamp { display: none; }
-      .container { padding: 24px 12px 48px; }
-      .card-head, .card-body { padding-left: 16px; padding-right: 16px; }
-      .chart-wrapper { padding: 18px 16px 0; }
-      .data-table th:first-child, .data-table td:first-child { padding-left: 16px; }
-      .data-table thead th { padding: 10px 4px; font-size: 11.5px; }
-      .peaks-table thead th:not(:first-child) {
-        font-size: 14px;
-        font-weight: 700;
-        padding-top: 12px;
-        padding-bottom: 12px;
+      .masthead-title .date {
+        font-size: 13px;
+        margin-top: 6px;
+        padding: 6px 12px 6px 8px;
+        gap: 8px;
       }
-      .data-table tbody td { padding: 11px 4px; font-size: 14px; }
-      .data-table tbody td:first-child { font-size: 14px; }
+      .masthead-title .date::before { font-size: 8px; padding: 2px 6px; }
+      .masthead-logo img { height: 36px; }
+      .masthead-actions .stamp { display: none; }
+      .container { padding: 0 14px; }
+      .card-head, .card-body { padding-left: 16px; padding-right: 16px; }
+      .data-table th:first-child, .data-table td:first-child { padding-left: 16px; }
+      .explain { grid-template-columns: 1fr; gap: 20px; }
+      .explain-group.note-group { grid-template-columns: 1fr; padding: 14px 16px; }
       .peaks-table col.label-col,
       .forecast-table col.label-col { width: 110px; }
-      .card:has(.explain) .card-body { padding: 20px 16px 24px; }
-      .explain {
-        grid-template-columns: 1fr;
-        gap: 22px;
-      }
-      .explain-group.note-group {
-        grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 16px 14px 18px;
-      }
-      .explain-row {
-        grid-template-columns: minmax(5.5rem, auto) 1fr;
-        gap: 8px 12px;
-        font-size: 13px;
-      }
     }
   </style>
 </head>
@@ -552,7 +649,6 @@
   <div class="card">
     <div class="card-body">
       <div class="explain">
-
         <div class="explain-group">
           <div class="explain-h">Score Bands</div>
           <div class="explain-items">
@@ -566,7 +662,6 @@
             </div>
           </div>
         </div>
-
         <div class="explain-group">
           <div class="explain-h">Daily Updates</div>
           <div class="explain-items">
@@ -580,36 +675,14 @@
             </div>
           </div>
         </div>
-
         <div class="explain-group note-group">
           <div class="explain-h">Note</div>
           <div class="note-row">
             Scores don't map directly to event probability. A score of 50 does <strong>not</strong> mean a 50% chance.
           </div>
         </div>
-
       </div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-head"><div class="card-title">Peaks to Date</div></div>
-    <table class="data-table peaks-table">
-      <colgroup>
-        <col class="label-col">
-        <col><col><col><col>
-      </colgroup>
-      <thead>
-        <tr>
-          <th></th>
-          <th>June</th>
-          <th>July</th>
-          <th>August</th>
-          <th>September</th>
-        </tr>
-      </thead>
-      <tbody id="peaks-body"></tbody>
-    </table>
   </div>
 
   <div class="card">
@@ -634,15 +707,34 @@
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-head"><div class="card-title">Peaks to Date</div></div>
+    <table class="data-table peaks-table">
+      <colgroup>
+        <col class="label-col">
+        <col><col><col><col>
+      </colgroup>
+      <thead>
+        <tr>
+          <th></th>
+          <th>June</th>
+          <th>July</th>
+          <th>August</th>
+          <th>September</th>
+        </tr>
+      </thead>
+      <tbody id="peaks-body"></tbody>
+    </table>
+  </div>
+
+  <p class="data-attribution" role="note"><strong>Data sources.</strong> The 7-day 4CP forecast (scores, projected peak load, and peak hour) is provided by Amperon. Peaks to date are derived from ERCOT system demand via NRG Stream.</p>
+
 </main>
 
 <script type="application/json" id="fourcp-view-token">{{ view_token | default('') | tojson }}</script>
 <script>
 const $ = (id) => document.getElementById(id);
 const KEY_STORAGE = 'fourcp_api_key';
-
-// Injected by the server when the page is served via a /r/{token} email link.
-// Empty string means the visitor is using the manual API-key login flow.
 const VIEW_TOKEN = JSON.parse(document.getElementById('fourcp-view-token').textContent);
 
 let apiKey = localStorage.getItem(KEY_STORAGE) || '';
@@ -734,9 +826,6 @@ function renderPeaks(peaks) {
     row('Peak (GW)', (p) => p.peak_gw.toFixed(1));
 }
 
-// Syncs forecast table col widths to Chart.js category bands: label col ends at the
-// left edge of the first band (tick center − half band width), data cols = band width,
-// right pad fills the remainder so bars and line points align with table columns.
 const tableSync = {
   id: 'tableSync',
   afterLayout(chart) {
@@ -769,6 +858,64 @@ const tableSync = {
   }
 };
 
+function scoreBarColors(score) {
+  if (score >= 90) {
+    return {
+      bg: 'rgba(220, 90, 110, 0.82)',
+      border: 'rgba(252, 165, 165, 0.75)',
+      glow: 'rgba(248, 113, 113, 0.28)',
+      glowFill: 'rgba(248, 113, 113, 0.14)',
+    };
+  }
+  return {
+    bg: 'rgba(82, 130, 185, 0.72)',
+    border: 'rgba(147, 197, 253, 0.65)',
+    glow: 'rgba(96, 165, 250, 0.22)',
+    glowFill: 'rgba(96, 165, 250, 0.12)',
+  };
+}
+
+function chartRoundRect(ctx, x, y, w, h, r) {
+  const rad = Math.min(r, w / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rad, y);
+  ctx.lineTo(x + w - rad, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+  ctx.lineTo(x + w, y + h - rad);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+  ctx.lineTo(x + rad, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+  ctx.lineTo(x, y + rad);
+  ctx.quadraticCurveTo(x, y, x + rad, y);
+  ctx.closePath();
+}
+
+const barGlow = {
+  id: 'barGlow',
+  beforeDatasetDraw(chart, args) {
+    const ds = chart.data.datasets[args.index];
+    if (!ds || ds.type !== 'bar' || ds.label !== '4CP Score') return;
+    const meta = chart.getDatasetMeta(args.index);
+    const { ctx } = chart;
+    meta.data.forEach((bar, i) => {
+      if (!bar || bar.skip) return;
+      const style = scoreBarColors(ds.data[i]);
+      const x = bar.x - bar.width / 2;
+      const y = Math.min(bar.y, bar.base);
+      const w = bar.width;
+      const h = Math.abs(bar.base - bar.y);
+      if (h < 1) return;
+      ctx.save();
+      ctx.shadowColor = style.glow;
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = style.glowFill;
+      chartRoundRect(ctx, x, y, w, h, 3);
+      ctx.fill();
+      ctx.restore();
+    });
+  },
+};
+
 const thresholdLine = {
   id: 'thresholdLine',
   afterDraw(chart) {
@@ -776,12 +923,19 @@ const thresholdLine = {
     if (!chartArea || !scales.y) return;
     const y = scales.y.getPixelForValue(90);
     ctx.save();
-    ctx.strokeStyle = 'rgba(185, 28, 28, 0.55)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([5, 4]);
+    ctx.setLineDash([6, 5]);
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(chartArea.left, y);
     ctx.lineTo(chartArea.right, y);
+    ctx.strokeStyle = 'rgba(248, 113, 113, 0.25)';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = 'rgba(248, 113, 113, 0.45)';
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(252, 165, 165, 0.95)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
@@ -822,13 +976,9 @@ function renderForecast(pred) {
           type: 'bar',
           label: '4CP Score',
           data: pred.predictions.map(p => p.cp_score),
-          backgroundColor: pred.predictions.map(p =>
-            p.cp_score >= 90 ? 'rgba(185,28,28,0.80)' : 'rgba(114,147,176,0.55)'
-          ),
-          borderColor: pred.predictions.map(p =>
-            p.cp_score >= 90 ? '#b91c1c' : '#7293b0'
-          ),
-          borderWidth: 1,
+          backgroundColor: pred.predictions.map(p => scoreBarColors(p.cp_score).bg),
+          borderColor: pred.predictions.map(p => scoreBarColors(p.cp_score).border),
+          borderWidth: 2,
           borderRadius: 3,
           categoryPercentage: 0.72,
           barPercentage: 0.75,
@@ -837,15 +987,32 @@ function renderForecast(pred) {
         },
         {
           type: 'line',
+          label: 'Peak GW glow',
+          data: pred.predictions.map(p => p.peak_load_gwh),
+          borderColor: 'rgba(252, 211, 77, 0.22)',
+          backgroundColor: 'transparent',
+          borderWidth: 5,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          pointHitRadius: 0,
+          tension: 0.35,
+          yAxisID: 'yGW',
+          order: 0,
+        },
+        {
+          type: 'line',
           label: 'Peak GW',
           data: pred.predictions.map(p => p.peak_load_gwh),
-          borderColor: '#1a2a4a',
+          borderColor: '#f4d03f',
           backgroundColor: 'transparent',
-          borderWidth: 2,
+          borderWidth: 2.5,
           pointRadius: 4,
-          pointBackgroundColor: '#ffffff',
-          pointBorderColor: '#1a2a4a',
+          pointBackgroundColor: '#0e1621',
+          pointBorderColor: '#f4d03f',
           pointBorderWidth: 2,
+          pointHoverBorderColor: '#fff7cc',
+          pointHoverBackgroundColor: '#0e1621',
+          pointHoverRadius: 6,
           tension: 0.35,
           yAxisID: 'yGW',
           order: 1,
@@ -859,10 +1026,15 @@ function renderForecast(pred) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#0f1a2f',
+          filter: (item) => item.dataset.label !== 'Peak GW glow',
+          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          borderColor: 'rgba(244, 176, 0, 0.35)',
+          borderWidth: 1,
           padding: 12,
           titleFont: { family: 'DM Sans', size: 12, weight: '700' },
           bodyFont: { family: 'DM Sans', size: 12, weight: '500' },
+          titleColor: '#f4b000',
+          bodyColor: '#e5e7eb',
           displayColors: false,
           callbacks: {
             title: (items) => {
@@ -871,8 +1043,11 @@ function renderForecast(pred) {
             },
             label: (item) => {
               const p = pred.predictions[item.dataIndex];
-              if (item.datasetIndex === 0) return `4CP Score: ${p.cp_score}`;
-              return [`Peak Load: ${p.peak_load_gwh.toFixed(1)} GW`, `Peak Hour: ${p.peak_hour}`];
+              if (item.dataset.label === '4CP Score') return `4CP Score: ${p.cp_score}`;
+              if (item.dataset.label === 'Peak GW') {
+                return [`Peak Load: ${p.peak_load_gwh.toFixed(1)} GW`, `Peak Hour: ${p.peak_hour}`];
+              }
+              return null;
             }
           }
         }
@@ -888,10 +1063,10 @@ function renderForecast(pred) {
             for (let v = scale.min; v <= scale.max; v += 5) ticks.push({ value: v });
             scale.ticks = ticks;
           },
-          grid: { color: '#eef0f3' },
+          grid: { color: 'rgba(255, 255, 255, 0.18)', lineWidth: 1 },
           border: { display: false },
           ticks: {
-            color: '#334155',
+            color: '#cfd8e3',
             font: { size: 12, weight: '600', family: 'DM Sans, sans-serif' },
             padding: 20,
             crossAlign: 'near',
@@ -900,7 +1075,7 @@ function renderForecast(pred) {
           title: {
             display: true,
             text: 'GW',
-            color: '#1e293b',
+            color: '#f4b000',
             font: { size: 12, weight: '700', family: 'DM Sans, sans-serif' },
           },
         },
@@ -915,7 +1090,7 @@ function renderForecast(pred) {
           grid: { drawOnChartArea: false },
           border: { display: false },
           ticks: {
-            color: '#334155',
+            color: '#cfd8e3',
             font: { size: 12, weight: '600', family: 'DM Sans, sans-serif' },
             padding: 14,
             crossAlign: 'far',
@@ -929,7 +1104,7 @@ function renderForecast(pred) {
         }
       }
     },
-    plugins: [tableSync, thresholdLine]
+    plugins: [tableSync, barGlow, thresholdLine]
   });
   chartInstance.update();
 }
