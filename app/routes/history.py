@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import get_session, require_client
 from app.models import FetchRun, Prediction
 from app.routes.predictions import PredictionItem
+from app.serialization import ApiDateTime
 
 router = APIRouter(prefix="/api", tags=["history"], dependencies=[Depends(require_client)])
 
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/api", tags=["history"], dependencies=[Depends(requir
 class HistorySnapshot(BaseModel):
     cp_day_called: date
     slot: str
-    fetched_at: datetime
+    fetched_at: ApiDateTime
     predictions: list[PredictionItem]
 
 
@@ -27,8 +28,8 @@ class FetchRunInfo(BaseModel):
     id: int
     source: str
     slot: str | None
-    started_at: datetime
-    finished_at: datetime | None
+    started_at: ApiDateTime
+    finished_at: ApiDateTime | None
     status: str
     error: str | None
     rows_written: int | None
