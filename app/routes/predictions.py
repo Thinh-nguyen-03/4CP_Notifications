@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_session, require_client
 from app.models import Prediction
+from app.serialization import ApiDateTime
 
 router = APIRouter(prefix="/api", tags=["predictions"], dependencies=[Depends(require_client)])
 
@@ -22,15 +23,15 @@ class PredictionBatchResponse(BaseModel):
     slot: str
     cp_day_called: date
     forecast_interval: str
-    fetched_at: datetime
+    fetched_at: ApiDateTime
     predictions: list[PredictionItem]
 
 
 class MonthlyPeakItem(BaseModel):
     month: int
     month_name: str
-    peak_timestamp: datetime
-    adjusted_interval: datetime
+    peak_timestamp: ApiDateTime
+    adjusted_interval: ApiDateTime
     peak_mw: int
     peak_gw: float
     peak_hour: str
@@ -44,7 +45,7 @@ class PeaksResponse(BaseModel):
 class LatestResponse(BaseModel):
     predictions: PredictionBatchResponse | None
     peaks: PeaksResponse | None
-    last_updated: datetime | None
+    last_updated: ApiDateTime | None
 
 
 def _format_interval_str(start: date) -> str:
