@@ -8,6 +8,7 @@ dependency is needed — the token exchange is a plain HTTPS POST that httpx han
 Required Azure AD app permissions (application, not delegated):
   Mail.Send
 """
+import base64
 import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -34,6 +35,10 @@ _token_expires_at: datetime = datetime.min.replace(tzinfo=timezone.utc)
 _EMAIL_TEMPLATES = Jinja2Templates(
     directory=str(Path(__file__).parent.parent / "templates")
 )
+
+_STATIC_DIR = Path(__file__).parent.parent / "static"
+_LOGO_FILENAME = "senergy-logo.png"
+_LOGO_CID = "senergy-logo@4cp"
 
 
 def _format_send_date_ct() -> str:
@@ -62,14 +67,38 @@ def _slot_display_label(slot: str) -> str:
 
 
 def _logo_url() -> str:
-    """Hosted color logo for light header (`/static/senergy-logo.png`)."""
+    """Public URL fallback when inline logo file is unavailable."""
     base = (settings.base_url or "").strip().rstrip("/")
     if base.startswith(("http://", "https://")):
-        return f"{base}/static/senergy-logo.png"
+        return f"{base}/static/{_LOGO_FILENAME}"
     return "https://www.poweredbysenergy.com/senergy-logo.png"
 
 
-def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: str) -> str:
+def _inline_logo_attachment() -> tuple[str, dict] | tuple[str, None]:
+    """
+    Prefer an inline CID attachment (works in Outlook without loading remote images).
+    Returns (img src for HTML, Graph attachment dict or None).
+    """
+    logo_path = _STATIC_DIR / _LOGO_FILENAME
+    if not logo_path.is_file():
+        log.warning("Email logo file missing: %s — using remote URL", logo_path)
+        return _logo_url(), None
+
+    content_b64 = base64.b64encode(logo_path.read_bytes()).decode("ascii")
+    attachment = {
+        "@odata.type": "#microsoft.graph.fileAttachment",
+        "name": _LOGO_FILENAME,
+        "contentType": "image/png",
+        "contentBytes": content_b64,
+        "isInline": True,
+        "contentId": _LOGO_CID,
+    }
+    return f"cid:{_LOGO_CID}", attachment
+
+
+def _render_dashboard_email_html(
+    view_url: str, forecast_interval: str, slot: str, logo_src: str
+) -> str:
     slot_label = _slot_display_label(slot)
     contact_addr = (settings.email_reply_to or settings.email_sender).strip()
     subject = f"Question about ERCOT 4CP ({slot_label}) — {forecast_interval}"
@@ -77,7 +106,7 @@ def _render_dashboard_email_html(view_url: str, forecast_interval: str, slot: st
 
     template = _EMAIL_TEMPLATES.env.get_template("email/dashboard_report.html")
     return template.render(
-        logo_url=_logo_url(),
+        logo_url=logo_src,
         dashboard_url=view_url,
         date_str=forecast_interval,
         send_date_str=_format_send_date_ct(),
@@ -170,8 +199,7 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
     Send the dashboard link email via Microsoft Graph API.
 
     TO  → settings.email_primary_to  (visible recipient, e.g. EnergyManagement@…)
-    BCC → `email_list` rows, or EMAIL_BCC if empty. If USE_MOCK_FETCHERS, only EMAIL_BCC
-    (if unset, email is sent with TO only — no BCC).
+    BCC → `email_list` rows, or EMAIL_BCC when set. If no BCC list, sends to TO only.
     """
     # Guard: check required config
     missing = [
@@ -188,18 +216,15 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
         return
 
     bcc_addresses = await _bcc_recipients()
-    if not bcc_addresses:
-        if settings.use_mock_fetchers:
-            log.info("USE_MOCK_FETCHERS: EMAIL_BCC empty — sending without BCC recipients")
-        else:
-            log.warning("No BCC recipients: add rows to email_list or set EMAIL_BCC")
-            return
 
+    logo_src, logo_attachment = _inline_logo_attachment()
     msg_inner: dict = {
         "subject": f"Daily ERCOT 4CP 7-Day {slot} Report - {_format_send_date_ct()}",
         "body": {
             "contentType": "HTML",
-            "content": _render_dashboard_email_html(view_url, forecast_interval, slot),
+            "content": _render_dashboard_email_html(
+                view_url, forecast_interval, slot, logo_src
+            ),
         },
         "from": {
             "emailAddress": {"address": settings.email_sender}
@@ -214,6 +239,8 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
         ]
 
     message: dict = {"message": msg_inner}
+    if logo_attachment is not None:
+        msg_inner["attachments"] = [logo_attachment]
 
     if settings.email_reply_to:
         message["message"]["replyTo"] = [
