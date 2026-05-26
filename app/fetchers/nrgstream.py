@@ -100,11 +100,19 @@ def _parse_csv(body: str) -> list[DemandReading]:
     lines = body.splitlines()
     header_idx = None
     for i, line in enumerate(lines):
-        if "Effective Date" in line and "Actual System Demand" in line:
+        lower = line.lower()
+        if "effective date" in lower and (
+            "actual system demand" in lower or "system demand" in lower
+        ):
             header_idx = i
             break
     if header_idx is None:
-        raise RuntimeError("NRGStream CSV missing expected header row")
+        preview = "\n".join(lines[:8])[:500]
+        _log.warning(
+            "NRGStream CSV has no demand header; skipping monthly peaks. Preview: %s",
+            preview or "(empty body)",
+        )
+        return []
 
     reader = csv.reader(io.StringIO("\n".join(lines[header_idx:])))
     rows = list(reader)
