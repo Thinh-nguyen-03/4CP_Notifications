@@ -93,10 +93,8 @@ async def run_nrgstream() -> bool:
             log.info("nrgstream: updated %d monthly peaks year=%s", written, season_year)
             return True
         except Exception as e:
-            log.exception("nrgstream fetch failed")
-            await _record_run_end(
-                session, run, "failed", error=f"{e}\n{traceback.format_exc()}"
-            )
+            log.warning("nrgstream fetch failed: %s", e)
+            await _record_run_end(session, run, "failed", error=str(e))
             return False
 
 
@@ -141,7 +139,8 @@ async def main() -> int:
         log.warning("Skipping email notification because Amperon fetch failed")
 
     await engine.dispose()
-    return 0 if (amperon_ok and nrgstream_ok) else 1
+    # Amperon + notify are required; NRGStream peaks are best-effort
+    return 0 if amperon_ok else 1
 
 
 if __name__ == "__main__":
