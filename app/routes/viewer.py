@@ -23,7 +23,7 @@ from app.routes.predictions import (
     PeaksResponse,
     PredictionBatchResponse,
     PredictionItem,
-    _format_interval_str,
+    format_forecast_interval,
     _get_latest_batch,
 )
 from app.services.peaks import adjusted_interval
@@ -95,7 +95,7 @@ async def _assemble_predictions(
     return PredictionBatchResponse(
         slot=resolved_slot,
         cp_day_called=cp_day,
-        forecast_interval=_format_interval_str(cp_day),
+        forecast_interval=format_forecast_interval([r.forecast_date for r in rows]),
         fetched_at=max(r.fetched_at for r in rows),
         predictions=[
             PredictionItem(
