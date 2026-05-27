@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -57,6 +57,11 @@ def format_forecast_interval(forecast_dates: list[date]) -> str:
         f"{start.strftime('%B')} {start.day}, {start.year} - "
         f"{end.strftime('%B')} {end.day}, {end.year}"
     )
+
+
+def _format_interval_str(cp_day: date) -> str:
+    """Legacy import name (cp_day + 6 days). Prefer format_forecast_interval."""
+    return format_forecast_interval([cp_day, cp_day + timedelta(days=6)])
 
 
 async def _get_latest_batch(
