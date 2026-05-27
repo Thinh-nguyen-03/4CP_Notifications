@@ -21,7 +21,7 @@ from app.db_init import create_tables
 from app.fetchers.amperon import PredictionBatch, fetch_amperon
 from app.fetchers.nrgstream import fetch_demand_readings
 from app.models import FetchRun
-from app.routes.predictions import _format_interval_str
+from app.routes.predictions import format_forecast_interval
 from app.services.email import send_dashboard_email
 from app.services.peaks import compute_monthly_peaks, upsert_monthly_peaks
 from app.services.predictions import upsert_predictions
@@ -108,7 +108,7 @@ async def run_notify(batch: PredictionBatch) -> None:
         raw_token = await create_view_token(session, batch.slot, batch.cp_day_called)
 
         view_url = f"{settings.base_url.rstrip('/')}/r/{raw_token}"
-        interval = _format_interval_str(batch.cp_day_called)
+        interval = format_forecast_interval([p.forecast_date for p in batch.predictions])
 
         try:
             await send_dashboard_email(view_url, interval, slot=batch.slot)
