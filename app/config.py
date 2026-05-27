@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     # Email addresses
     email_sender: str = ""         # mailbox used to send  e.g. pnguyen@poweredbysenergy.com
     email_primary_to: str = ""     # visible TO line       e.g. EnergyManagement@poweredbysenergy.com
+    email_cc: str = ""             # optional CC list (comma/semicolon-separated)
     email_bcc: str = ""            # Fallback BCC list when email_list table is empty (comma/semicolon-separated)
     email_reply_to: str = ""       # optional reply-to (leave blank to use email_sender)
 
