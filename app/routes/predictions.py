@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -48,9 +48,15 @@ class LatestResponse(BaseModel):
     last_updated: ApiDateTime | None
 
 
-def _format_interval_str(start: date) -> str:
-    end = start + timedelta(days=6)
-    return f"{start.strftime('%B')} {start.day}, {start.year} - {end.strftime('%B')} {end.day}, {end.year}"
+def format_forecast_interval(forecast_dates: list[date]) -> str:
+    """Label from first/last day in the 7-day forecast (not cp_day_called)."""
+    if not forecast_dates:
+        return ""
+    start, end = min(forecast_dates), max(forecast_dates)
+    return (
+        f"{start.strftime('%B')} {start.day}, {start.year} - "
+        f"{end.strftime('%B')} {end.day}, {end.year}"
+    )
 
 
 async def _get_latest_batch(
@@ -90,7 +96,7 @@ async def get_predictions(
     return PredictionBatchResponse(
         slot=slot,
         cp_day_called=cp_day,
-        forecast_interval=_format_interval_str(cp_day),
+        forecast_interval=format_forecast_interval([r.forecast_date for r in rows]),
         fetched_at=max(r.fetched_at for r in rows),
         predictions=[
             PredictionItem(
