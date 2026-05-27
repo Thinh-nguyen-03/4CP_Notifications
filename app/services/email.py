@@ -199,6 +199,7 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
     Send the dashboard link email via Microsoft Graph API.
 
     TO  → settings.email_primary_to  (visible recipient, e.g. EnergyManagement@…)
+    CC  → EMAIL_CC when set (visible to all recipients)
     BCC → `email_list` rows, or EMAIL_BCC when set. If no BCC list, sends to TO only.
     """
     # Guard: check required config
@@ -215,6 +216,7 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
         log.warning("Email skipped — missing config: %s", ", ".join(missing))
         return
 
+    cc_addresses = _parse_address_list(settings.email_cc)
     bcc_addresses = await _bcc_recipients()
 
     logo_src, logo_attachment = _inline_logo_attachment()
@@ -233,6 +235,10 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
             {"emailAddress": {"address": settings.email_primary_to}}
         ],
     }
+    if cc_addresses:
+        msg_inner["ccRecipients"] = [
+            {"emailAddress": {"address": addr}} for addr in cc_addresses
+        ]
     if bcc_addresses:
         msg_inner["bccRecipients"] = [
             {"emailAddress": {"address": addr}} for addr in bcc_addresses
@@ -261,19 +267,13 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
         )
 
     if resp.status_code == 202:
-        if bcc_addresses:
-            log.info(
-                "Graph API: email sent to TO=%s + %d BCC recipients for %s",
-                settings.email_primary_to,
-                len(bcc_addresses),
-                forecast_interval,
-            )
-        else:
-            log.info(
-                "Graph API: email sent to TO=%s (no BCC) for %s",
-                settings.email_primary_to,
-                forecast_interval,
-            )
+        log.info(
+            "Graph API: email sent TO=%s CC=%d BCC=%d for %s",
+            settings.email_primary_to,
+            len(cc_addresses),
+            len(bcc_addresses),
+            forecast_interval,
+        )
     else:
         log.error("Graph API sendMail failed %s: %s", resp.status_code, resp.text[:400])
         resp.raise_for_status()
