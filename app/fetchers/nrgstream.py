@@ -96,21 +96,47 @@ async def fetch_demand_readings(season_year: int) -> list[DemandReading]:
     return _parse_csv(body)
 
 
-def _parse_csv(body: str) -> list[DemandReading]:
-    lines = body.splitlines()
-    header_idx = None
+def _header_columns(line: str) -> list[str]:
+    row = next(csv.reader([line]), [])
+    return [c.strip().lower().lstrip("\ufeff") for c in row]
+
+
+def _find_csv_header_row(lines: list[str]) -> int | None:
+    """Locate the data header row (legacy or current NRGStream export)."""
     for i, line in enumerate(lines):
-        lower = line.lower()
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        lower = stripped.lower()
+        cols = _header_columns(stripped)
+        if (
+            cols
+            and cols[0] in ("date/time", "effective date")
+            and len(cols) >= 2
+            and (cols[1] == "mw" or "system demand" in cols[1])
+        ):
+            return i
         if "effective date" in lower and (
             "actual system demand" in lower or "system demand" in lower
         ):
-            header_idx = i
-            break
+            return i
+    return None
+
+
+def _parse_csv(body: str) -> list[DemandReading]:
+    body = body.lstrip("\ufeff").replace("\r\n", "\n")
+    lines = body.splitlines()
+    header_idx = _find_csv_header_row(lines)
     if header_idx is None:
         preview = "\n".join(lines[:8])[:500]
+        non_comment = [ln for ln in lines if ln.strip() and not ln.strip().startswith("#")]
         _log.warning(
-            "NRGStream CSV has no demand header; skipping monthly peaks. Preview: %s",
+            "NRGStream CSV has no demand header; skipping monthly peaks. "
+            "lines=%d non_comment=%d preview=%s first_data_line=%s",
+            len(lines),
+            len(non_comment),
             preview or "(empty body)",
+            (non_comment[0][:120] if non_comment else "(none)"),
         )
         return []
 
@@ -132,4 +158,6 @@ def _parse_csv(body: str) -> list[DemandReading]:
             continue
         readings.append(DemandReading(timestamp=ts, mw=mw))
 
+    if readings:
+        _log.info("NRGStream parsed %d demand readings", len(readings))
     return readings
