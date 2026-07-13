@@ -22,11 +22,13 @@ from app.services.view_token import create_view_token
 
 # ---------------------------------------------------------------------------
 # TEST_MODE = True  -> sends ONLY to TEST_RECIPIENT (no CC, no BCC, no client list).
-# TEST_MODE = False -> the real send, to the full client list (TO/CC/BCC as configured).
+# TEST_MODE = False -> the real send: TO is hardcoded to LIVE_RECIPIENT, CC as
+#                       configured (EMAIL_CC), BCC = the full client list.
 # Send yourself a test first. Flip TEST_MODE back to False only when you're
 # ready for the real send — there's no undo once it goes to the full list.
 TEST_MODE = True
 TEST_RECIPIENT = "pnguyen@poweredbysenergy.com"
+LIVE_RECIPIENT = "pnguyen@poweredbysenergy.com"
 # ---------------------------------------------------------------------------
 
 logging.basicConfig(
@@ -57,7 +59,8 @@ async def main() -> int:
         try:
             await send_feature_announcement_email(
                 view_url,
-                override_recipient=TEST_RECIPIENT if TEST_MODE else None,
+                to_override=TEST_RECIPIENT if TEST_MODE else LIVE_RECIPIENT,
+                suppress_cc_bcc=TEST_MODE,
             )
         except Exception:
             log.exception("Announcement email failed to send")
