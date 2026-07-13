@@ -120,7 +120,9 @@ async def assemble_matrix(session: AsyncSession, days: int) -> MatrixResponse:
 
 @router.get("/matrix", response_model=MatrixResponse)
 async def get_matrix(
-    days: int = Query(30, ge=1, le=365, description="Look-back window on cp_day_called"),
+    # 150 days comfortably covers the full ~123-day 4CP season (May 30 - Sep 30)
+    # from any point within it, so history is never truncated mid-season.
+    days: int = Query(150, ge=1, le=365, description="Look-back window on cp_day_called"),
     session: AsyncSession = Depends(get_session),
 ) -> MatrixResponse:
     return await assemble_matrix(session, days)
