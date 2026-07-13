@@ -115,6 +115,19 @@ def _render_dashboard_email_html(
     )
 
 
+def _render_feature_announcement_html(view_url: str, logo_src: str) -> str:
+    contact_addr = (settings.email_reply_to or settings.email_sender).strip()
+    subject = "Question about the new ERCOT 4CP dashboard views"
+    contact_href = f"mailto:{contact_addr}?subject={quote(subject, safe='')}"
+
+    template = _EMAIL_TEMPLATES.env.get_template("email/feature_announcement.html")
+    return template.render(
+        logo_url=logo_src,
+        dashboard_url=view_url,
+        contact_href=contact_href,
+    )
+
+
 async def _bcc_recipients() -> list[str]:
     """
     BCC list: all addresses in `email_list` (case-insensitive dedupe, stable order).
@@ -194,9 +207,9 @@ async def _get_access_token() -> str:
     return _cached_token
 
 
-async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str = "11AM") -> None:
+async def _send_via_graph(subject: str, html_body: str, log_context: str) -> None:
     """
-    Send the dashboard link email via Microsoft Graph API.
+    POST a rendered HTML email to Microsoft Graph's sendMail endpoint.
 
     TO  → settings.email_primary_to  (visible recipient, e.g. EnergyManagement@…)
     CC  → EMAIL_CC when set (visible to all recipients)
@@ -219,15 +232,10 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
     cc_addresses = _parse_address_list(settings.email_cc)
     bcc_addresses = await _bcc_recipients()
 
-    logo_src, logo_attachment = _inline_logo_attachment()
+    _logo_src, logo_attachment = _inline_logo_attachment()
     msg_inner: dict = {
-        "subject": f"Daily ERCOT 4CP 7-Day {slot} Report - {_format_send_date_ct()}",
-        "body": {
-            "contentType": "HTML",
-            "content": _render_dashboard_email_html(
-                view_url, forecast_interval, slot, logo_src
-            ),
-        },
+        "subject": subject,
+        "body": {"contentType": "HTML", "content": html_body},
         "from": {
             "emailAddress": {"address": settings.email_sender}
         },
@@ -272,8 +280,24 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
             settings.email_primary_to,
             len(cc_addresses),
             len(bcc_addresses),
-            forecast_interval,
+            log_context,
         )
     else:
         log.error("Graph API sendMail failed %s: %s", resp.status_code, resp.text[:400])
         resp.raise_for_status()
+
+
+async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str = "11AM") -> None:
+    """Send the recurring dashboard-link report email via Microsoft Graph API."""
+    logo_src, _ = _inline_logo_attachment()
+    html_body = _render_dashboard_email_html(view_url, forecast_interval, slot, logo_src)
+    subject = f"Daily ERCOT 4CP 7-Day {slot} Report - {_format_send_date_ct()}"
+    await _send_via_graph(subject, html_body, log_context=forecast_interval)
+
+
+async def send_feature_announcement_email(view_url: str) -> None:
+    """One-off: send the new-features announcement to the full client list."""
+    logo_src, _ = _inline_logo_attachment()
+    html_body = _render_feature_announcement_html(view_url, logo_src)
+    subject = "New on Your ERCOT 4CP Dashboard: Forecast History & Outlook Rewind"
+    await _send_via_graph(subject, html_body, log_context="feature announcement")
