@@ -5,7 +5,7 @@ the email link.  No bearer API key is required.
   GET /r/{token}                    → renders the dashboard HTML
   GET /api/report/{token}           → returns LatestResponse JSON
   GET /api/report/{token}/predictions?slot=3AM|11AM  → PredictionBatchResponse JSON
-  GET /api/report/{token}/matrix?days=30             → MatrixResponse JSON
+  GET /api/report/{token}/matrix?days=150            → MatrixResponse JSON
 """
 from datetime import date, datetime
 from pathlib import Path
@@ -186,7 +186,7 @@ async def get_report_predictions(
 @router.get("/api/report/{token}/matrix", response_model=MatrixResponse)
 async def get_report_matrix(
     token: str,
-    days: int = Query(30, ge=1, le=365),
+    days: int = Query(150, ge=1, le=365),  # matches app/routes/matrix.py's season-length default
     session: AsyncSession = Depends(get_session),
 ) -> MatrixResponse:
     """Prediction matrix + daily actuals for the evolution and rewind views."""
