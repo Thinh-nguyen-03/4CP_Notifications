@@ -26,7 +26,7 @@ from app.services.view_token import create_view_token
 #                       configured (EMAIL_CC), BCC = the full client list.
 # Send yourself a test first. Flip TEST_MODE back to False only when you're
 # ready for the real send — there's no undo once it goes to the full list.
-TEST_MODE = True
+TEST_MODE = False
 TEST_RECIPIENT = "pnguyen@poweredbysenergy.com"
 LIVE_RECIPIENT = "pnguyen@poweredbysenergy.com"
 # ---------------------------------------------------------------------------
