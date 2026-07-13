@@ -23,7 +23,12 @@ from app.fetchers.nrgstream import fetch_demand_readings
 from app.models import FetchRun
 from app.routes.predictions import format_forecast_interval
 from app.services.email import send_dashboard_email
-from app.services.peaks import compute_monthly_peaks, upsert_monthly_peaks
+from app.services.peaks import (
+    compute_daily_peaks,
+    compute_monthly_peaks,
+    upsert_daily_peaks,
+    upsert_monthly_peaks,
+)
 from app.services.predictions import upsert_predictions
 from app.services.view_token import create_view_token, mark_email_sent
 
@@ -87,10 +92,15 @@ async def run_nrgstream() -> bool:
         try:
             season_year = datetime.now().year
             readings = await fetch_demand_readings(season_year)
-            peaks = compute_monthly_peaks(readings)
-            written = await upsert_monthly_peaks(session, peaks)
-            await _record_run_end(session, run, "success", rows_written=written)
-            log.info("nrgstream: updated %d monthly peaks year=%s", written, season_year)
+            monthly = await upsert_monthly_peaks(session, compute_monthly_peaks(readings))
+            daily = await upsert_daily_peaks(session, compute_daily_peaks(readings))
+            await _record_run_end(session, run, "success", rows_written=monthly + daily)
+            log.info(
+                "nrgstream: updated %d monthly peaks, %d daily peaks year=%s",
+                monthly,
+                daily,
+                season_year,
+            )
             return True
         except Exception as e:
             log.warning("nrgstream fetch failed: %s", e)
