@@ -1630,6 +1630,12 @@ function renderForecastCard(pred, cfg) {
       responsive: true,
       maintainAspectRatio: false,
       layout: { padding: { left: 48, right: 48, top: 12, bottom: 4 } },
+      // Show every series for the hovered day together, not just whichever one the
+      // cursor happens to intersect — the actual-peak line in particular has a
+      // zero-radius hit area (it's a flat reference line, not meant to draw
+      // attention to itself), so under the default intersect:true it would almost
+      // never trigger its own tooltip on hover.
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -1936,6 +1942,12 @@ function renderEvolution() {
       responsive: true,
       maintainAspectRatio: false,
       layout: { padding: { left: 48, right: 48, top: 12, bottom: 4 } },
+      // Show every series for the hovered day together, not just whichever one the
+      // cursor happens to intersect — the actual-peak line in particular has a
+      // zero-radius hit area (it's a flat reference line, not meant to draw
+      // attention to itself), so under the default intersect:true it would almost
+      // never trigger its own tooltip on hover.
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
