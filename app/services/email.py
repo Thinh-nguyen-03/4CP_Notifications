@@ -120,7 +120,7 @@ def _render_feature_announcement_html(view_url: str, logo_src: str) -> str:
     subject = "Question about the new ERCOT 4CP dashboard views"
     contact_href = f"mailto:{contact_addr}?subject={quote(subject, safe='')}"
 
-    template = _EMAIL_TEMPLATES.env.get_template("email/feature_announcement.html")
+    template = _EMAIL_TEMPLATES.env.get_template("feature_announcement.html")
     return template.render(
         logo_url=logo_src,
         dashboard_url=view_url,
