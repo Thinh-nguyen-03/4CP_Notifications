@@ -10,7 +10,17 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import engine
 from app.db_init import create_tables
-from app.routes import admin, chart, dashboard, history, latest, peaks, predictions, viewer
+from app.routes import (
+    admin,
+    chart,
+    dashboard,
+    history,
+    latest,
+    matrix,
+    peaks,
+    predictions,
+    viewer,
+)
 
 STATIC_DIR = Path(__file__).parent / "static"
 STATIC_DIR.mkdir(exist_ok=True)
@@ -68,5 +78,6 @@ app.include_router(peaks.router)
 app.include_router(latest.router)
 app.include_router(chart.router)
 app.include_router(history.router)
+app.include_router(matrix.router)
 app.include_router(dashboard.router)
 app.include_router(viewer.router)   # public token-gated dashboard + JSON API
