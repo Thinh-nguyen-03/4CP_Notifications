@@ -65,11 +65,14 @@ def _format_interval_str(cp_day: date) -> str:
 
 
 async def _get_latest_batch(
-    session: AsyncSession, slot: str | None
+    session: AsyncSession, slot: str | None, cp_day: date | None = None
 ) -> tuple[date, str] | None:
+    """Newest (cp_day_called, slot) pair, narrowed by whichever filters are given."""
     stmt = select(Prediction.cp_day_called, Prediction.slot)
     if slot:
         stmt = stmt.where(Prediction.slot == slot)
+    if cp_day:
+        stmt = stmt.where(Prediction.cp_day_called == cp_day)
     stmt = stmt.order_by(Prediction.cp_day_called.desc(), Prediction.fetched_at.desc()).limit(1)
     row = (await session.execute(stmt)).first()
     if row is None:
@@ -84,7 +87,7 @@ async def get_predictions(
     session: AsyncSession = Depends(get_session),
 ) -> PredictionBatchResponse:
     if cp_day is None or slot is None:
-        latest = await _get_latest_batch(session, slot)
+        latest = await _get_latest_batch(session, slot, cp_day)
         if latest is None:
             raise HTTPException(status_code=404, detail="No predictions available")
         cp_day, slot = latest
