@@ -316,7 +316,7 @@ async def send_feature_announcement_email(
     """
     logo_src, _ = _inline_logo_attachment()
     html_body = _render_feature_announcement_html(view_url, logo_src)
-    subject = "New on Your ERCOT 4CP Dashboard: Forecast History & Outlook Rewind"
+    subject = "New Features on ERCOT 4CP Dashboard: Forecast History & Outlook Rewind"
     if override_recipient:
         subject = f"[TEST] {subject}"
     await _send_via_graph(
