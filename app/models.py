@@ -73,6 +73,27 @@ class MonthlyPeak(Base):
     )
 
 
+class DailyPeak(Base):
+    """Highest observed system demand for a single day.
+
+    Derived from the same NRGStream season pull that feeds MonthlyPeak, which
+    already returns every hourly reading.  Lets the forecast-evolution view plot
+    what actually happened against what was predicted.
+    """
+
+    __tablename__ = "daily_peaks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    peak_date: Mapped[date] = mapped_column(Date, unique=True, index=True)
+    peak_timestamp: Mapped[datetime] = mapped_column(DateTime)
+    peak_mw: Mapped[int] = mapped_column(Integer)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
 class FetchRun(Base):
     __tablename__ = "fetch_runs"
 
