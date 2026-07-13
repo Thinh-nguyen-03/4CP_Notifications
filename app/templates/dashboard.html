@@ -735,7 +735,7 @@
     }
 
     .chart-legend .swatch.forecast { border-top-color: #f4d03f; }
-    .chart-legend .swatch.actual { border-top-color: var(--ink); border-top-style: dashed; }
+    .chart-legend .swatch.actual { border-top-color: #4ade80; }
     .chart-legend .swatch.final { border-top-color: var(--gold-soft); border-top-style: dashed; }
     .chart-legend .swatch.score-lo { border-top-color: #93c5fd; }
     .chart-legend .swatch.score-hi { border-top-color: #fca5a5; }
@@ -1610,12 +1610,12 @@ function renderForecastCard(pred, cfg) {
       label: 'Actual Peak',
       data: pred.predictions.map(p => actuals[p.forecast_date]?.peak_gw ?? null),
       showLine: false,
-      borderColor: '#e5e7eb',
+      borderColor: '#4ade80',
       pointStyle: 'rectRot',
       pointRadius: 6,
       pointHoverRadius: 8,
       pointBackgroundColor: '#0e1621',
-      pointBorderColor: '#e5e7eb',
+      pointBorderColor: '#4ade80',
       pointBorderWidth: 2,
       spanGaps: false,
       yAxisID: 'yGW',
@@ -1917,9 +1917,8 @@ function renderEvolution() {
       type: 'line',
       label: 'Actual Peak',
       data: labels.map(() => actual.peak_gw),
-      borderColor: 'rgba(229,231,235,0.65)',
-      borderDash: [6, 4],
-      borderWidth: 1.5,
+      borderColor: 'rgba(74, 222, 128, 0.9)',
+      borderWidth: 2,
       pointRadius: 0,
       pointHitRadius: 0,
       tension: 0,
