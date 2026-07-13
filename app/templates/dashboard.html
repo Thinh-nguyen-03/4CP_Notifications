@@ -619,16 +619,41 @@
       border-bottom-color: var(--gold);
     }
 
-    /* Day-pill strip — target-day selector for the evolution view */
+    /* Day-pill strip — target-day selector for the evolution view. The native
+       scrollbar (unstyled on Chrome/Safari) is hidden in favour of icon-btn
+       prev/next arrows, matching the masthead's refresh/sign-out controls;
+       drag/wheel/trackpad scrolling still works, the arrows are just the
+       visible affordance. */
+    .day-strip-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(17, 24, 39, 0.2);
+    }
+
+    .day-strip-nav { flex: 0 0 auto; }
+
+    .day-strip-nav:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
     .day-strip {
       display: flex;
       gap: 2px;
-      padding: 12px 24px;
+      padding: 2px 0;
       overflow-x: auto;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      background: rgba(17, 24, 39, 0.2);
-      scrollbar-width: thin;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex: 1 1 auto;
+      min-width: 0;
     }
+
+    .day-strip::-webkit-scrollbar { display: none; }
 
     .day-pill {
       flex: 0 0 auto;
@@ -877,7 +902,9 @@
       .rewind-select { min-width: 0; padding: 6px 26px 6px 8px; font-size: 11.5px; }
       .rewind-controls .asof-label { display: none; }
       .card-head { flex-wrap: wrap; }
-      .day-strip { padding: 10px 12px; }
+      .day-strip-wrap { padding: 8px 10px; gap: 4px; }
+      .day-strip-nav { width: 26px; height: 26px; }
+      .day-strip-nav svg { width: 12px; height: 12px; }
       .chart-legend { padding: 10px 15px 12px; gap: 12px; }
     }
 
@@ -1046,7 +1073,15 @@
       </div>
     </div>
 
-    <div class="day-strip" id="evolution-days"></div>
+    <div class="day-strip-wrap">
+      <button type="button" class="icon-btn day-strip-nav" id="evolution-days-prev" title="Earlier days" aria-label="Earlier days">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="day-strip" id="evolution-days"></div>
+      <button type="button" class="icon-btn day-strip-nav" id="evolution-days-next" title="Later days" aria-label="Later days">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
 
     <div id="evolution-content">
       <div class="chart-wrapper"><canvas id="evolution-chart"></canvas></div>
@@ -1076,8 +1111,6 @@
 
     <div class="empty-state hidden" id="evolution-empty"></div>
   </div>
-
-  <p class="data-attribution" role="note"><strong>Reading this view.</strong> Each bar/point is one Amperon run. Moving left to right, the target day draws nearer and lead time shrinks to zero. A missing bar or a break in the line means no forecast was recorded for that run &mdash; the value is missing, not unchanged.</p>
 
 </section>
 
@@ -1110,8 +1143,6 @@
     <div class="empty-state hidden" id="rewind-empty"></div>
   </div>
 
-  <p class="data-attribution" role="note"><strong>Reading this view.</strong> This is the 7-day outlook exactly as it stood when that forecast was called. Where a later run revised a day, the <em>final forecast</em> line shows what we eventually thought, and the table gives the change. Actual peak load is marked where ERCOT demand has since been observed.</p>
-
 </section>
 
 </main>
@@ -1128,7 +1159,8 @@ const SLOTS = ['3AM', '11AM'];
 const SLOT_RANK = { '3AM': 0, '11AM': 1 };
 const slotLabel = (s) => (s === '3AM' ? '3 AM' : '11 AM');
 
-const MATRIX_DAYS = 30;
+// Covers the full ~123-day 4CP season (May 30 - Sep 30) from any point within it.
+const MATRIX_DAYS = 150;
 let matrix = null;
 let matrixPromise = null;
 let mIndex = null;
@@ -1726,6 +1758,11 @@ function renderEvolution() {
     return `<button type="button" class="day-pill ${d === evoTarget ? 'active' : ''}" data-target="${d}">` +
       `<span class="dow">${fmtWeekday(d)}</span><span class="dnum">${fmtShortDate(d)}</span>${flag}</button>`;
   }).join('');
+  // Snap the strip so the selected day is always in view without manual scrolling
+  // first — matters once the 150-day window can hold well over a screen's worth.
+  $('evolution-days').querySelector('.day-pill.active')
+    ?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  updateDayStripNav();
 
   const T = evoTarget;
   const slots = scopeSlots();
@@ -2143,6 +2180,23 @@ $('evolution-days').addEventListener('click', (e) => {
   evoTarget = pill.dataset.target;
   renderEvolution();
 });
+
+function updateDayStripNav() {
+  const strip = $('evolution-days');
+  const atStart = strip.scrollLeft <= 1;
+  const atEnd = strip.scrollLeft >= strip.scrollWidth - strip.clientWidth - 1;
+  $('evolution-days-prev').disabled = atStart;
+  $('evolution-days-next').disabled = atEnd;
+}
+
+function scrollDayStrip(dir) {
+  const strip = $('evolution-days');
+  strip.scrollBy({ left: dir * strip.clientWidth * 0.8, behavior: 'smooth' });
+}
+
+$('evolution-days-prev').addEventListener('click', () => scrollDayStrip(-1));
+$('evolution-days-next').addEventListener('click', () => scrollDayStrip(1));
+$('evolution-days').addEventListener('scroll', updateDayStripNav);
 
 $('rewind-select').addEventListener('change', (e) => {
   rewindIndex = Number(e.target.value);
