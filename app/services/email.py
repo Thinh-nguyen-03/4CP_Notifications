@@ -207,30 +207,40 @@ async def _get_access_token() -> str:
     return _cached_token
 
 
-async def _send_via_graph(subject: str, html_body: str, log_context: str) -> None:
+async def _send_via_graph(
+    subject: str,
+    html_body: str,
+    log_context: str,
+    override_recipient: str | None = None,
+) -> None:
     """
     POST a rendered HTML email to Microsoft Graph's sendMail endpoint.
 
     TO  → settings.email_primary_to  (visible recipient, e.g. EnergyManagement@…)
     CC  → EMAIL_CC when set (visible to all recipients)
     BCC → `email_list` rows, or EMAIL_BCC when set. If no BCC list, sends to TO only.
+
+    override_recipient: when set, sends ONLY to this address — no CC, no BCC.
+    Used for test sends so a test run can never leak to the real client list.
     """
-    # Guard: check required config
-    missing = [
-        name for name, val in [
-            ("AZURE_TENANT_ID",   settings.azure_tenant_id),
-            ("AZURE_CLIENT_ID",   settings.azure_client_id),
-            ("AZURE_CLIENT_SECRET", settings.azure_client_secret),
-            ("EMAIL_SENDER",      settings.email_sender),
-            ("EMAIL_PRIMARY_TO",  settings.email_primary_to),
-        ] if not val
+    # Guard: check required config. EMAIL_PRIMARY_TO is irrelevant for a test
+    # send, since override_recipient replaces it entirely.
+    required = [
+        ("AZURE_TENANT_ID",   settings.azure_tenant_id),
+        ("AZURE_CLIENT_ID",   settings.azure_client_id),
+        ("AZURE_CLIENT_SECRET", settings.azure_client_secret),
+        ("EMAIL_SENDER",      settings.email_sender),
     ]
+    if not override_recipient:
+        required.append(("EMAIL_PRIMARY_TO", settings.email_primary_to))
+    missing = [name for name, val in required if not val]
     if missing:
         log.warning("Email skipped — missing config: %s", ", ".join(missing))
         return
 
-    cc_addresses = _parse_address_list(settings.email_cc)
-    bcc_addresses = await _bcc_recipients()
+    to_address = override_recipient or settings.email_primary_to
+    cc_addresses = [] if override_recipient else _parse_address_list(settings.email_cc)
+    bcc_addresses = [] if override_recipient else await _bcc_recipients()
 
     _logo_src, logo_attachment = _inline_logo_attachment()
     msg_inner: dict = {
@@ -240,7 +250,7 @@ async def _send_via_graph(subject: str, html_body: str, log_context: str) -> Non
             "emailAddress": {"address": settings.email_sender}
         },
         "toRecipients": [
-            {"emailAddress": {"address": settings.email_primary_to}}
+            {"emailAddress": {"address": to_address}}
         ],
     }
     if cc_addresses:
@@ -277,7 +287,7 @@ async def _send_via_graph(subject: str, html_body: str, log_context: str) -> Non
     if resp.status_code == 202:
         log.info(
             "Graph API: email sent TO=%s CC=%d BCC=%d for %s",
-            settings.email_primary_to,
+            to_address,
             len(cc_addresses),
             len(bcc_addresses),
             log_context,
@@ -295,9 +305,20 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
     await _send_via_graph(subject, html_body, log_context=forecast_interval)
 
 
-async def send_feature_announcement_email(view_url: str) -> None:
-    """One-off: send the new-features announcement to the full client list."""
+async def send_feature_announcement_email(
+    view_url: str, override_recipient: str | None = None
+) -> None:
+    """
+    One-off: send the new-features announcement.
+
+    override_recipient: send only to this address (no CC/BCC) — for a test
+    send to yourself before the real send to the full client list.
+    """
     logo_src, _ = _inline_logo_attachment()
     html_body = _render_feature_announcement_html(view_url, logo_src)
     subject = "New on Your ERCOT 4CP Dashboard: Forecast History & Outlook Rewind"
-    await _send_via_graph(subject, html_body, log_context="feature announcement")
+    if override_recipient:
+        subject = f"[TEST] {subject}"
+    await _send_via_graph(
+        subject, html_body, log_context="feature announcement", override_recipient=override_recipient
+    )
