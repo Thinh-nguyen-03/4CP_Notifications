@@ -851,19 +851,24 @@
     .rewind-controls .latest:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
 
     /* Table-view twin for the evolution chart. Fixed widths so every measure column
-       gets room to breathe and centres under its own heading. */
-    .evo-table col.evo-called { width: 25%; }
-    .evo-table col.evo-lead   { width: 15%; }
-    .evo-table col.evo-score  { width: 14%; }
-    .evo-table col.evo-change { width: 14%; }
-    .evo-table col.evo-gw     { width: 16%; }
-    .evo-table col.evo-hour   { width: 16%; }
+       gets room to breathe and centres under its own heading — including the first
+       column, which used to be left-aligned inside an oversized 25% track and left
+       a big dead gap before "Lead". */
+    .evo-table col.evo-called { width: 18%; }
+    .evo-table col.evo-lead   { width: 16%; }
+    .evo-table col.evo-score  { width: 16%; }
+    .evo-table col.evo-change { width: 16%; }
+    .evo-table col.evo-gw     { width: 17%; }
+    .evo-table col.evo-hour   { width: 17%; }
 
     .evo-table thead th,
     .evo-table tbody td { text-align: center; padding: 11px 12px; }
 
+    /* .data-table's shared first-child rule (left-align, 24px pad) would otherwise
+       win here too, since evo-table carries that class — override it to match
+       every other centred column. */
     .evo-table thead th:first-child,
-    .evo-table tbody td:first-child { text-align: left; }
+    .evo-table tbody td:first-child { text-align: center; padding-left: 12px; }
 
     .evo-table tbody td:first-child { text-transform: none; letter-spacing: 0.02em; }
     .evo-table .gap td { color: var(--muted); font-style: italic; font-weight: 400; }
