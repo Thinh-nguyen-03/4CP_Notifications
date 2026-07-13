@@ -5,6 +5,7 @@ the email link.  No bearer API key is required.
   GET /r/{token}                    → renders the dashboard HTML
   GET /api/report/{token}           → returns LatestResponse JSON
   GET /api/report/{token}/predictions?slot=3AM|11AM  → PredictionBatchResponse JSON
+  GET /api/report/{token}/matrix?days=30             → MatrixResponse JSON
 """
 from datetime import date, datetime
 from pathlib import Path
@@ -17,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_session
 from app.models import MonthlyPeak, Prediction
+from app.routes.matrix import MatrixResponse, assemble_matrix
 from app.routes.predictions import (
     LatestResponse,
     MonthlyPeakItem,
@@ -26,17 +28,13 @@ from app.routes.predictions import (
     format_forecast_interval,
     _get_latest_batch,
 )
-from app.services.peaks import adjusted_interval
+from app.services.peaks import adjusted_interval, peak_hour_label
 from app.services.view_token import validate_view_token
 
 TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 
 router = APIRouter(tags=["viewer"])
-
-
-def _peak_hour_label(ts: datetime) -> str:
-    return f"HE{adjusted_interval(ts).hour or 24}"
 
 
 async def _assemble_peaks(session: AsyncSession) -> PeaksResponse:
@@ -68,7 +66,7 @@ async def _assemble_peaks(session: AsyncSession) -> PeaksResponse:
                 adjusted_interval=adjusted_interval(r.peak_timestamp),
                 peak_mw=r.peak_mw,
                 peak_gw=round(r.peak_mw / 1000, 3),
-                peak_hour=_peak_hour_label(r.peak_timestamp),
+                peak_hour=peak_hour_label(r.peak_timestamp),
             )
             for r in rows
         ],
@@ -183,3 +181,17 @@ async def get_report_predictions(
     if predictions is None:
         raise HTTPException(status_code=404, detail="No predictions available")
     return predictions
+
+
+@router.get("/api/report/{token}/matrix", response_model=MatrixResponse)
+async def get_report_matrix(
+    token: str,
+    days: int = Query(30, ge=1, le=365),
+    session: AsyncSession = Depends(get_session),
+) -> MatrixResponse:
+    """Prediction matrix + daily actuals for the evolution and rewind views."""
+    view_token = await validate_view_token(session, token)
+    if view_token is None:
+        raise HTTPException(status_code=404, detail="Link expired or invalid")
+
+    return await assemble_matrix(session, days)
