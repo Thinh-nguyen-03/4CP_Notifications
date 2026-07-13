@@ -211,36 +211,37 @@ async def _send_via_graph(
     subject: str,
     html_body: str,
     log_context: str,
-    override_recipient: str | None = None,
+    to_override: str | None = None,
+    suppress_cc_bcc: bool = False,
 ) -> None:
     """
     POST a rendered HTML email to Microsoft Graph's sendMail endpoint.
 
-    TO  → settings.email_primary_to  (visible recipient, e.g. EnergyManagement@…)
+    TO  → settings.email_primary_to, unless to_override is set (visible recipient)
     CC  → EMAIL_CC when set (visible to all recipients)
     BCC → `email_list` rows, or EMAIL_BCC when set. If no BCC list, sends to TO only.
 
-    override_recipient: when set, sends ONLY to this address — no CC, no BCC.
+    suppress_cc_bcc: when True, sends ONLY to the TO address — no CC, no BCC.
     Used for test sends so a test run can never leak to the real client list.
     """
-    # Guard: check required config. EMAIL_PRIMARY_TO is irrelevant for a test
-    # send, since override_recipient replaces it entirely.
+    # Guard: check required config. EMAIL_PRIMARY_TO is irrelevant when
+    # to_override is set, since it replaces settings.email_primary_to entirely.
     required = [
         ("AZURE_TENANT_ID",   settings.azure_tenant_id),
         ("AZURE_CLIENT_ID",   settings.azure_client_id),
         ("AZURE_CLIENT_SECRET", settings.azure_client_secret),
         ("EMAIL_SENDER",      settings.email_sender),
     ]
-    if not override_recipient:
+    if not to_override:
         required.append(("EMAIL_PRIMARY_TO", settings.email_primary_to))
     missing = [name for name, val in required if not val]
     if missing:
         log.warning("Email skipped — missing config: %s", ", ".join(missing))
         return
 
-    to_address = override_recipient or settings.email_primary_to
-    cc_addresses = [] if override_recipient else _parse_address_list(settings.email_cc)
-    bcc_addresses = [] if override_recipient else await _bcc_recipients()
+    to_address = to_override or settings.email_primary_to
+    cc_addresses = [] if suppress_cc_bcc else _parse_address_list(settings.email_cc)
+    bcc_addresses = [] if suppress_cc_bcc else await _bcc_recipients()
 
     _logo_src, logo_attachment = _inline_logo_attachment()
     msg_inner: dict = {
@@ -306,19 +307,23 @@ async def send_dashboard_email(view_url: str, forecast_interval: str, slot: str 
 
 
 async def send_feature_announcement_email(
-    view_url: str, override_recipient: str | None = None
+    view_url: str,
+    to_override: str | None = None,
+    suppress_cc_bcc: bool = False,
 ) -> None:
     """
     One-off: send the new-features announcement.
 
-    override_recipient: send only to this address (no CC/BCC) — for a test
+    to_override: replace the TO address (e.g. a hardcoded live recipient, or a
+    test address). suppress_cc_bcc: when True, also drops CC/BCC — for a test
     send to yourself before the real send to the full client list.
     """
     logo_src, _ = _inline_logo_attachment()
     html_body = _render_feature_announcement_html(view_url, logo_src)
     subject = "New Features on ERCOT 4CP Dashboard: Forecast History & Outlook Rewind"
-    if override_recipient:
+    if suppress_cc_bcc:
         subject = f"[TEST] {subject}"
     await _send_via_graph(
-        subject, html_body, log_context="feature announcement", override_recipient=override_recipient
+        subject, html_body, log_context="feature announcement",
+        to_override=to_override, suppress_cc_bcc=suppress_cc_bcc,
     )
