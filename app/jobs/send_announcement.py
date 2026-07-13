@@ -24,7 +24,7 @@ from app.services.view_token import create_view_token
 # TEST_MODE = True  -> sends ONLY to TEST_RECIPIENT (no CC, no BCC, no client list).
 # TEST_MODE = False -> the real send: TO is hardcoded to LIVE_RECIPIENT, no CC,
 #                       BCC = the full client list.
-TEST_MODE = True
+TEST_MODE = False
 TEST_RECIPIENT = "pnguyen@poweredbysenergy.com"
 LIVE_RECIPIENT = "pnguyen@poweredbysenergy.com"
 
