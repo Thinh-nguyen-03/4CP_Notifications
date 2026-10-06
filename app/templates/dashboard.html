@@ -1325,6 +1325,13 @@ function renderPeaks(peaks) {
     const d = new Date(p.peak_timestamp);
     return `${d.toLocaleString('en-US', { month: 'short' })} ${d.getDate()}`;
   };
+  // peak_timestamp is the interval start (Central); show the 15-min window it covers.
+  const intervalLabel = (p) => {
+    const start = new Date(p.peak_timestamp);
+    const end = new Date(start.getTime() + 15 * 60 * 1000);
+    const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return `${hhmm(start)}–${hhmm(end)}`;
+  };
   const row = (label, format) =>
     '<tr><td>' +
     label +
@@ -1334,6 +1341,7 @@ function renderPeaks(peaks) {
   $('peaks-body').innerHTML =
     row('Date', monthDateLabel) +
     row('Hour', (p) => p.peak_hour) +
+    row('15-Min Interval', intervalLabel) +
     row('Peak (GW)', (p) => p.peak_gw.toFixed(1));
 }
 
